@@ -25,6 +25,10 @@ export interface TimelineTheme {
   grid: string;
   text: string;
   accent: string;
+  headerGroupBg: string; // Background for the top header row (groups)
+  headerRowBg: string;   // Background for the time scale row (days/weeks)
+  hover: string;
+  inputBg: string;
 }
 
 export const THEMES: Record<string, TimelineTheme> = {
@@ -34,13 +38,21 @@ export const THEMES: Record<string, TimelineTheme> = {
     grid: 'border-slate-200',
     text: 'text-slate-800',
     accent: 'bg-blue-500',
+    headerGroupBg: 'bg-slate-50/50',
+    headerRowBg: 'bg-slate-50/10',
+    hover: 'hover:bg-slate-50',
+    inputBg: 'focus:bg-white'
   },
   dark: {
     name: 'Deep Dark',
-    bg: 'bg-slate-900',
-    grid: 'border-slate-700',
-    text: 'text-slate-100',
+    bg: 'bg-black',
+    grid: 'border-zinc-800', // Slightly lighter than black for visibility
+    text: 'text-zinc-100',
     accent: 'bg-indigo-500',
+    headerGroupBg: 'bg-zinc-900',
+    headerRowBg: 'bg-zinc-900',
+    hover: 'hover:bg-zinc-900',
+    inputBg: 'focus:bg-zinc-800'
   },
   minimal: {
     name: 'Soft Minimal',
@@ -48,6 +60,10 @@ export const THEMES: Record<string, TimelineTheme> = {
     grid: 'border-rose-200',
     text: 'text-rose-900',
     accent: 'bg-rose-400',
+    headerGroupBg: 'bg-rose-100',
+    headerRowBg: 'bg-rose-100/50',
+    hover: 'hover:bg-rose-100',
+    inputBg: 'focus:bg-white'
   },
   forest: {
     name: 'Nature Forest',
@@ -55,5 +71,9 @@ export const THEMES: Record<string, TimelineTheme> = {
     grid: 'border-emerald-200',
     text: 'text-emerald-900',
     accent: 'bg-emerald-600',
+    headerGroupBg: 'bg-emerald-100',
+    headerRowBg: 'bg-emerald-100/50',
+    hover: 'hover:bg-emerald-100',
+    inputBg: 'focus:bg-white'
   }
 };

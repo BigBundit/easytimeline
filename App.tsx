@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2 } from 'lucide-react';
+import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2, MoveHorizontal } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
 import TimelineChart from './components/TimelineChart';
@@ -20,8 +20,11 @@ const App: React.FC = () => {
   const [title, setTitle] = useState<string>('แผนผังระยะเวลาโครงการ (Timeline)');
   const [description, setDescription] = useState<string>('กำหนดการและขั้นตอนการดำเนินงานที่สำคัญของทีม');
   const [columnCount, setColumnCount] = useState<number>(20);
+  const [minColumnWidth, setMinColumnWidth] = useState<number>(60);
   const [showVerticalLines, setShowVerticalLines] = useState<boolean>(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [customTimeLabels, setCustomTimeLabels] = useState<Record<string, string>>({});
+  const [taskListLabel, setTaskListLabel] = useState<string>('รายการงาน');
   
   const chartRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -80,6 +83,56 @@ const App: React.FC = () => {
       }
       return task;
     }));
+  };
+
+  // Helper to calculate the next sequence value
+  const getNextLabel = (current: string): string => {
+    // Check for Thai Months
+    const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const thaiIdx = thaiMonths.indexOf(current);
+    if (thaiIdx !== -1) return thaiMonths[(thaiIdx + 1) % 12];
+
+    // Check for English Months (Short)
+    const engMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const engIdx = engMonths.findIndex(m => m.toLowerCase() === current.toLowerCase());
+    if (engIdx !== -1) return engMonths[(engIdx + 1) % 12];
+    
+    // Check for Text + Number sequence (e.g., "W1", "Day 1", "Week-05")
+    // Regex finds: (Any Prefix)(Last Number Sequence)(Any Suffix)
+    const match = current.match(/^(.*?)(\d+)(.*)$/);
+    if (match) {
+      const prefix = match[1];
+      const numberStr = match[2];
+      const suffix = match[3];
+      const nextNumber = parseInt(numberStr, 10) + 1;
+      return `${prefix}${nextNumber}${suffix}`;
+    }
+
+    return current; // Return same if no pattern found
+  };
+
+  const updateTimeLabel = (index: number, value: string) => {
+    setCustomTimeLabels(prev => {
+      const newLabels = { ...prev, [`${scale}-${index}`]: value };
+      
+      // Auto-increment logic: if the first column (index 0) is changed
+      if (index === 0) {
+        let currentVal = value;
+        for (let i = 1; i < columnCount; i++) {
+          const nextVal = getNextLabel(currentVal);
+          // Only update if we successfully generated a new sequential value (not just copied)
+          if (nextVal !== currentVal) {
+            newLabels[`${scale}-${i}`] = nextVal;
+            currentVal = nextVal;
+          } else {
+             // If we can't increment anymore (e.g., just random text), stop auto-filling
+            break; 
+          }
+        }
+      }
+      
+      return newLabels;
+    });
   };
 
   const exportAsPng = async () => {
@@ -215,15 +268,35 @@ const App: React.FC = () => {
                   className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg text-xs text-slate-600 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:bg-white transition-all"
                 />
               </div>
-              <div className="flex flex-col">
+
+              <div>
                 <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5 mb-1">
-                  <Maximize2 className="w-3.5 h-3.5 text-slate-400" /> เส้น
+                  <MoveHorizontal className="w-3.5 h-3.5 text-slate-400" /> ขนาด
+                </span>
+                <div className="flex items-center h-[34px]">
+                  <button 
+                    onClick={() => setMinColumnWidth(prev => Math.max(30, prev - 5))}
+                    className="h-full px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 border-r-0 rounded-l-lg text-slate-500 transition-colors"
+                  >-</button>
+                  <div className="flex-1 h-full flex items-center justify-center border-y border-slate-200 bg-white text-xs text-slate-600 font-medium">
+                    {minColumnWidth}
+                  </div>
+                  <button 
+                    onClick={() => setMinColumnWidth(prev => Math.min(200, prev + 5))}
+                    className="h-full px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 transition-colors"
+                  >+</button>
+                </div>
+              </div>
+
+              <div className="col-span-2 flex flex-col">
+                <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5 mb-1">
+                  <Maximize2 className="w-3.5 h-3.5 text-slate-400" /> เส้นตาราง (แนวตั้ง)
                 </span>
                 <button 
                   onClick={() => setShowVerticalLines(!showVerticalLines)}
                   className={`w-full py-2 px-2 border rounded-lg text-[10px] font-bold transition-all ${showVerticalLines ? 'bg-blue-50 border-blue-400 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
                 >
-                  {showVerticalLines ? 'เปิด' : 'ปิด'}
+                  {showVerticalLines ? 'แสดง' : 'ซ่อน'}
                 </button>
               </div>
             </div>
@@ -392,11 +465,17 @@ const App: React.FC = () => {
                 scale={scale} 
                 theme={currentTheme} 
                 columnCount={columnCount}
+                minColumnWidth={minColumnWidth}
                 showVerticalLines={showVerticalLines}
+                customTimeLabels={customTimeLabels}
+                taskListLabel={taskListLabel}
+                onUpdateTimeLabel={updateTimeLabel}
                 onToggleSlot={toggleSlot}
                 onAddTask={addTask}
                 onRemoveTask={removeTask}
                 onUpdateTask={updateTask}
+                onUpdateTaskListLabel={setTaskListLabel}
+                onUpdateHeaderGroupLabel={(id, label) => updateHeaderGroup(id, { label })}
               />
             </div>
 
