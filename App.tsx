@@ -54,27 +54,33 @@ const App: React.FC = () => {
 
   const exportAsPng = async () => {
     if (chartRef.current && scrollContainerRef.current) {
+      const chartElement = chartRef.current;
+      const scrollContainer = scrollContainerRef.current;
+      
       try {
-        const scrollContainer = scrollContainerRef.current;
-        const originalOverflow = scrollContainer.style.overflowX;
-        const originalWidth = scrollContainer.style.width;
+        // Save original styles
+        const originalScrollOverflow = scrollContainer.style.overflowX;
+        const originalScrollWidth = scrollContainer.style.width;
+        const originalChartWidth = chartElement.style.width;
+        const originalChartMinWidth = chartElement.style.minWidth;
 
+        // Force elements to expand to full content width for capture
         scrollContainer.style.overflowX = 'visible';
         scrollContainer.style.width = 'auto';
+        chartElement.style.width = 'auto';
+        chartElement.style.minWidth = 'max-content';
 
-        const dataUrl = await htmlToImage.toPng(chartRef.current, { 
-          quality: 0.95, 
+        const dataUrl = await htmlToImage.toPng(chartElement, { 
+          quality: 1, 
           backgroundColor: THEMES[themeKey].bg.startsWith('bg-white') ? '#ffffff' : '#0f172a',
-          style: {
-            maxWidth: 'none',
-            width: 'auto',
-            height: 'auto',
-            margin: '0'
-          }
+          pixelRatio: 2, // Higher quality
         });
 
-        scrollContainer.style.overflowX = originalOverflow;
-        scrollContainer.style.width = originalWidth;
+        // Restore original styles
+        scrollContainer.style.overflowX = originalScrollOverflow;
+        scrollContainer.style.width = originalScrollWidth;
+        chartElement.style.width = originalChartWidth;
+        chartElement.style.minWidth = originalChartMinWidth;
 
         const link = document.createElement('a');
         link.download = `timeline-${Date.now()}.png`;
@@ -82,6 +88,7 @@ const App: React.FC = () => {
         link.click();
       } catch (err) {
         console.error('Export failed', err);
+        alert('เกิดข้อผิดพลาดในการส่งออกรูปภาพ กรุณาลองใหม่อีกครั้ง');
       }
     }
   };
@@ -91,7 +98,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row relative overflow-x-hidden text-slate-700">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
           <LayoutGrid className="w-5 h-5 text-blue-600" />
           <span className="font-bold text-slate-700 text-sm">Easy Timeline</span>
@@ -99,6 +106,7 @@ const App: React.FC = () => {
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+          aria-label="Toggle menu"
         >
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -225,6 +233,7 @@ const App: React.FC = () => {
             <button 
               onClick={addTask}
               className="p-1 hover:bg-blue-50 text-blue-500 rounded-full transition-colors"
+              aria-label="Add task"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -240,7 +249,7 @@ const App: React.FC = () => {
                     onChange={(e) => {
                       setTasks(tasks.map(t => t.id === task.id ? { ...t, color: e.target.value } : t));
                     }}
-                    className="w-4 h-4 rounded cursor-pointer border-none bg-transparent"
+                    className="w-4 h-4 rounded cursor-pointer border-none bg-transparent flex-shrink-0"
                   />
                   <input 
                     type="text" 
@@ -251,7 +260,7 @@ const App: React.FC = () => {
                   />
                   <button 
                     onClick={() => removeTask(task.id)}
-                    className="md:opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-400 transition-all"
+                    className="md:opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-400 transition-all flex-shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -279,16 +288,16 @@ const App: React.FC = () => {
       )}
 
       {/* Main Preview Area */}
-      <main className="flex-1 p-4 md:p-8 flex flex-col items-center justify-start md:justify-center overflow-auto custom-scrollbar">
+      <main className="flex-1 p-3 md:p-8 flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-100/50">
         <div 
           ref={chartRef}
-          className={`min-w-fit max-w-full shadow-2xl rounded-2xl overflow-hidden ${currentTheme.bg} transition-all duration-500 border border-slate-200`}
+          className={`w-full max-w-full md:w-auto md:min-w-[600px] shadow-2xl rounded-2xl overflow-hidden ${currentTheme.bg} transition-all duration-500 border border-slate-200 flex flex-col`}
         >
-          <div className="p-6 md:p-12">
-            <header className={`mb-8 md:mb-10 border-b pb-6 ${currentTheme.grid}`}>
-              <h2 className={`text-2xl md:text-3xl font-bold mb-2 ${currentTheme.text}`}>{title}</h2>
+          <div className="p-5 md:p-12">
+            <header className={`mb-6 md:mb-10 border-b pb-4 md:pb-6 ${currentTheme.grid}`}>
+              <h2 className={`text-xl md:text-3xl font-bold mb-2 ${currentTheme.text}`}>{title}</h2>
               <p className={`text-xs md:text-sm mb-4 max-w-2xl leading-relaxed opacity-70 ${currentTheme.text}`}>{description}</p>
-              <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs md:text-sm opacity-50">
+              <div className="flex flex-wrap items-center gap-3 md:gap-4 text-[10px] md:text-sm opacity-50">
                 <span className={`flex items-center gap-1 ${currentTheme.text}`}>
                   <Calendar className="w-3.5 h-3.5 md:w-4 h-4" /> {new Date().toLocaleDateString('th-TH')}
                 </span>
@@ -300,7 +309,8 @@ const App: React.FC = () => {
 
             <div 
               ref={scrollContainerRef}
-              className="overflow-x-auto custom-scrollbar rounded-lg"
+              className="overflow-x-auto custom-scrollbar rounded-lg border border-slate-100 bg-white"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
                <TimelineChart 
                 tasks={tasks} 
@@ -312,11 +322,16 @@ const App: React.FC = () => {
               />
             </div>
 
-            <footer className={`mt-10 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] uppercase tracking-widest opacity-40 ${currentTheme.text}`}>
+            <footer className={`mt-8 md:mt-10 flex flex-col md:flex-row justify-between items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest opacity-40 ${currentTheme.text} text-center`}>
               <span>สร้างโดย Easy Timeline Maker</span>
               <span>&copy; 2026 ซินโต้ อินเทลลิเจ้นท์ จำกัด</span>
             </footer>
           </div>
+        </div>
+        
+        {/* Mobile instruction hint */}
+        <div className="md:hidden mt-4 text-[10px] text-slate-400 flex items-center gap-1 italic">
+          <Maximize2 className="w-3 h-3" /> แตะที่ช่องเพื่อเปิด/ปิด และเลื่อนซ้าย-ขวาเพื่อดูทั้งหมด
         </div>
       </main>
     </div>
