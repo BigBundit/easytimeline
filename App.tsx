@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { Plus, Download, Trash2, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X } from 'lucide-react';
+import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
-import { TimelineScale, Task, THEMES } from './types';
+import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
 import TimelineChart from './components/TimelineChart';
 
 const App: React.FC = () => {
@@ -10,6 +10,10 @@ const App: React.FC = () => {
     { id: '1', label: 'เริ่มต้นโครงการ', slots: [0, 1, 2], color: '#3b82f6' },
     { id: '2', label: 'ออกแบบ UI/UX', slots: [3, 4, 5, 6], color: '#10b981' },
     { id: '3', label: 'พัฒนาระบบหลังบ้าน', slots: [6, 7, 8, 9, 10], color: '#f59e0b' },
+  ]);
+  const [headerGroups, setHeaderGroups] = useState<HeaderGroup[]>([
+    { id: 'g1', label: 'มกราคม', start: 0, end: 3 },
+    { id: 'g2', label: 'กุมภาพันธ์', start: 4, end: 7 }
   ]);
   const [scale, setScale] = useState<TimelineScale>(TimelineScale.DAILY);
   const [themeKey, setThemeKey] = useState<string>('modern');
@@ -36,8 +40,34 @@ const App: React.FC = () => {
     setTasks(tasks.filter(t => t.id !== id));
   };
 
-  const updateTaskLabel = (id: string, label: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, label } : t));
+  const updateTask = (id: string, updates: Partial<Task>) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  const addHeaderGroup = () => {
+    // Find the max end index from existing groups to append after it
+    const lastEndIndex = headerGroups.length > 0 
+      ? Math.max(...headerGroups.map(g => g.end)) 
+      : -1;
+      
+    const newStart = lastEndIndex + 1;
+    const newEnd = newStart + 3; // Default duration of 4
+
+    const newGroup: HeaderGroup = {
+      id: Date.now().toString(),
+      label: 'หัวข้อใหม่',
+      start: newStart,
+      end: newEnd
+    };
+    setHeaderGroups([...headerGroups, newGroup]);
+  };
+
+  const updateHeaderGroup = (id: string, updates: Partial<HeaderGroup>) => {
+    setHeaderGroups(headerGroups.map(g => g.id === id ? { ...g, ...updates } : g));
+  };
+
+  const removeHeaderGroup = (id: string) => {
+    setHeaderGroups(headerGroups.filter(g => g.id !== id));
   };
 
   const toggleSlot = (taskId: string, slotIndex: number) => {
@@ -58,13 +88,11 @@ const App: React.FC = () => {
       const scrollContainer = scrollContainerRef.current;
       
       try {
-        // Save original styles
         const originalScrollOverflow = scrollContainer.style.overflowX;
         const originalScrollWidth = scrollContainer.style.width;
         const originalChartWidth = chartElement.style.width;
         const originalChartMinWidth = chartElement.style.minWidth;
 
-        // Force elements to expand to full content width for capture
         scrollContainer.style.overflowX = 'visible';
         scrollContainer.style.width = 'auto';
         chartElement.style.width = 'auto';
@@ -73,10 +101,9 @@ const App: React.FC = () => {
         const dataUrl = await htmlToImage.toPng(chartElement, { 
           quality: 1, 
           backgroundColor: THEMES[themeKey].bg.startsWith('bg-white') ? '#ffffff' : '#0f172a',
-          pixelRatio: 2, // Higher quality
+          pixelRatio: 2,
         });
 
-        // Restore original styles
         scrollContainer.style.overflowX = originalScrollOverflow;
         scrollContainer.style.width = originalScrollWidth;
         chartElement.style.width = originalChartWidth;
@@ -97,7 +124,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row relative overflow-x-hidden text-slate-700">
-      {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
           <LayoutGrid className="w-5 h-5 text-blue-600" />
@@ -112,10 +138,9 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      {/* Sidebar Controls */}
       <aside className={`
         fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 p-5 flex flex-col gap-5 shadow-xl transition-transform duration-300 transform 
-        md:translate-x-0 md:static md:z-auto md:shadow-sm
+        md:translate-x-0 md:static md:z-auto md:shadow-sm overflow-y-auto custom-scrollbar
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="hidden md:block">
@@ -126,7 +151,6 @@ const App: React.FC = () => {
           <p className="text-xs text-slate-400">สร้างแผนผังของคุณให้สวยงาม</p>
         </div>
 
-        {/* Project Meta Section */}
         <section className="space-y-3">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ข้อมูลพื้นฐาน</label>
           <div className="space-y-2">
@@ -155,7 +179,6 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Timeline Settings */}
         <section className="space-y-3">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">การแสดงผล</label>
           <div className="space-y-3">
@@ -226,14 +249,69 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Tasks Section */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">หัวข้อหน่วยหลัก (เช่น เดือน)</label>
+            <button 
+              onClick={addHeaderGroup}
+              className="p-1 hover:bg-blue-50 text-blue-500 rounded-full transition-colors"
+              title="เพิ่มต่อจากรายการล่าสุด"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {headerGroups.map(group => (
+              <div key={group.id} className="p-2 border border-slate-100 rounded-xl bg-slate-50 space-y-2">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    value={group.label}
+                    onChange={(e) => updateHeaderGroup(group.id, { label: e.target.value })}
+                    className="flex-1 bg-transparent border-none text-[10px] font-bold focus:ring-0 p-0 text-slate-600"
+                    placeholder="หัวข้อ (เช่น ม.ค.)"
+                  />
+                  <button onClick={() => removeHeaderGroup(group.id)} className="text-slate-400 hover:text-red-400">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 text-[10px]">
+                  <span className="text-slate-400">เริ่ม:</span>
+                  <input 
+                    type="number" 
+                    min={1}
+                    value={group.start + 1} 
+                    onChange={(e) => {
+                      const val = Math.max(1, parseInt(e.target.value) || 0);
+                      updateHeaderGroup(group.id, { start: val - 1 });
+                    }}
+                    className="w-12 bg-white border border-slate-200 rounded px-1 text-center text-slate-600"
+                  />
+                  <span className="text-slate-400">ถึง:</span>
+                  <input 
+                    type="number" 
+                    min={1}
+                    value={group.end + 1} 
+                    onChange={(e) => {
+                      const val = Math.max(1, parseInt(e.target.value) || 0);
+                      updateHeaderGroup(group.id, { end: val - 1 });
+                    }}
+                    className="w-12 bg-white border border-slate-200 rounded px-1 text-center text-slate-600"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Restore Task Management Section */}
         <section className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">รายการทั้งหมด</label>
             <button 
               onClick={addTask}
               className="p-1 hover:bg-blue-50 text-blue-500 rounded-full transition-colors"
-              aria-label="Add task"
+              title="เพิ่มรายการ"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -246,15 +324,13 @@ const App: React.FC = () => {
                   <input 
                     type="color" 
                     value={task.color}
-                    onChange={(e) => {
-                      setTasks(tasks.map(t => t.id === task.id ? { ...t, color: e.target.value } : t));
-                    }}
+                    onChange={(e) => updateTask(task.id, { color: e.target.value })}
                     className="w-4 h-4 rounded cursor-pointer border-none bg-transparent flex-shrink-0"
                   />
                   <input 
                     type="text" 
                     value={task.label}
-                    onChange={(e) => updateTaskLabel(task.id, e.target.value)}
+                    onChange={(e) => updateTask(task.id, { label: e.target.value })}
                     className="flex-1 bg-transparent border-none text-xs font-semibold focus:ring-0 p-0 text-slate-600 placeholder:text-slate-300"
                     placeholder="ชื่อรายการ..."
                   />
@@ -279,7 +355,6 @@ const App: React.FC = () => {
         </button>
       </aside>
 
-      {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-30 transition-opacity"
@@ -287,7 +362,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Main Preview Area */}
       <main className="flex-1 p-3 md:p-8 flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-100/50">
         <div 
           ref={chartRef}
@@ -314,11 +388,15 @@ const App: React.FC = () => {
             >
                <TimelineChart 
                 tasks={tasks} 
+                headerGroups={headerGroups}
                 scale={scale} 
                 theme={currentTheme} 
                 columnCount={columnCount}
                 showVerticalLines={showVerticalLines}
                 onToggleSlot={toggleSlot}
+                onAddTask={addTask}
+                onRemoveTask={removeTask}
+                onUpdateTask={updateTask}
               />
             </div>
 
@@ -329,9 +407,11 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Mobile instruction hint */}
-        <div className="md:hidden mt-4 text-[10px] text-slate-400 flex items-center gap-1 italic">
-          <Maximize2 className="w-3 h-3" /> แตะที่ช่องเพื่อเปิด/ปิด และเลื่อนซ้าย-ขวาเพื่อดูทั้งหมด
+        <div className="mt-4 text-[10px] text-slate-400 flex flex-col items-center gap-1 italic">
+          <div className="flex items-center gap-1">
+            <Maximize2 className="w-3 h-3" /> แตะที่ช่องเพื่อเปิด/ปิด และเลื่อนซ้าย-ขวาเพื่อดูทั้งหมด
+          </div>
+          <div>แก้ไขชื่อรายการและลบรายการได้ที่แถบเมนูหรือในตาราง</div>
         </div>
       </main>
     </div>

@@ -12,6 +12,13 @@ export interface Task {
   color: string;
 }
 
+export interface HeaderGroup {
+  id: string;
+  label: string;
+  start: number;
+  end: number;
+}
+
 export interface TimelineTheme {
   name: string;
   bg: string;
