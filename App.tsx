@@ -12,8 +12,7 @@ const App: React.FC = () => {
     { id: '3', label: 'พัฒนาระบบหลังบ้าน', slots: [6, 7, 8, 9, 10], color: '#f59e0b' },
   ]);
   const [headerGroups, setHeaderGroups] = useState<HeaderGroup[]>([
-    { id: 'g1', label: 'มกราคม', start: 0, end: 3 },
-    { id: 'g2', label: 'กุมภาพันธ์', start: 4, end: 7 }
+    { id: 'g1', label: 'มกราคม', start: 0, end: 3 }
   ]);
   const [scale, setScale] = useState<TimelineScale>(TimelineScale.DAILY);
   const [themeKey, setThemeKey] = useState<string>('modern');
@@ -640,7 +639,7 @@ const App: React.FC = () => {
         {/* Main Export Action */}
         <button 
           onClick={exportAsPng}
-          className="group flex items-center gap-3 bg-slate-900 text-white px-6 py-3.5 rounded-full shadow-2xl shadow-slate-900/30 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all"
+          className="group flex items-center gap-3 bg-green-600 text-white px-6 py-3.5 rounded-full shadow-2xl shadow-green-600/30 hover:bg-green-700 hover:scale-[1.02] active:scale-95 transition-all"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" /> 
           <span className="font-bold text-sm">ส่งออกเป็นรูปภาพ (PNG)</span>
