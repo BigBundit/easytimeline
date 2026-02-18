@@ -65,7 +65,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (resizingRef.current) {
         const diff = moveEvent.pageX - startXRef.current;
-        const newWidth = Math.max(150, startWidthRef.current + diff);
+        const newWidth = Math.max(80, startWidthRef.current + diff);
         onTaskListWidthChange(newWidth);
       }
     };
@@ -80,6 +80,29 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = 'col-resize';
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    resizingRef.current = true;
+    startXRef.current = e.touches[0].pageX;
+    startWidthRef.current = taskListWidth;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (resizingRef.current) {
+        const diff = moveEvent.touches[0].pageX - startXRef.current;
+        const newWidth = Math.max(80, startWidthRef.current + diff);
+        onTaskListWidthChange(newWidth);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      resizingRef.current = false;
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
   };
 
   const handleSlotMouseDown = (taskId: string, slotIndex: number, isCurrentlySelected: boolean) => {
@@ -206,9 +229,12 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                </div>
                {/* Resizer Handle */}
                <div 
-                 className="absolute top-0 right-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400/50 z-50 transition-colors"
+                 className="absolute top-0 right-0 bottom-0 w-6 -mr-3 cursor-col-resize z-50 flex justify-center group touch-none select-none"
                  onMouseDown={handleMouseDown}
-               />
+                 onTouchStart={handleTouchStart}
+               >
+                  <div className="w-1 h-full bg-transparent group-hover:bg-blue-400/50 transition-colors" />
+               </div>
             </th>
             {Array.from({ length: columnCount }).map((_, i) => {
               const labelKey = `${scale}-${i}`;

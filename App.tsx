@@ -20,7 +20,7 @@ const App: React.FC = () => {
   const [description, setDescription] = useState<string>('กำหนดการและขั้นตอนการดำเนินงานที่สำคัญของทีม');
   const [columnCount, setColumnCount] = useState<number>(20);
   const [minColumnWidth, setMinColumnWidth] = useState<number>(60);
-  const [taskListWidth, setTaskListWidth] = useState<number>(250);
+  const [taskListWidth, setTaskListWidth] = useState<number>(window.innerWidth < 768 ? 120 : 250);
   const [showVerticalLines, setShowVerticalLines] = useState<boolean>(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [customTimeLabels, setCustomTimeLabels] = useState<Record<string, string>>({});
