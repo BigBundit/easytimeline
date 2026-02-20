@@ -489,14 +489,14 @@ const App: React.FC = () => {
           await new Promise(resolve => reader.onloadend);
           const base64Data = (reader.result as string).split(',')[1];
           
-          // Save to external storage
+          // Save to documents directory
           try {
             const result = await Filesystem.writeFile({
-              path: `Download/${fileName}`,
+              path: fileName,
               data: base64Data,
-              directory: Directory.ExternalStorage,
+              directory: Directory.Documents,
             });
-            alert(`Image saved to Downloads: ${result.uri}`);
+            alert(`Image saved to Documents: ${result.uri}`);
           } catch (error) {
             console.error('Failed to save file:', error);
             alert('Failed to save image');
