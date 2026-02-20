@@ -26,6 +26,8 @@ const App: React.FC = () => {
   const [customTimeLabels, setCustomTimeLabels] = useState<Record<string, string>>({});
   const [taskListLabel, setTaskListLabel] = useState<string>('รายการงาน');
   const [activeSection, setActiveSection] = useState<string>('general'); // For accordion if needed, currently distinct blocks
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   // Initialize date with local time to avoid timezone issues
   const [projectDate, setProjectDate] = useState<string>(() => {
@@ -41,6 +43,22 @@ const App: React.FC = () => {
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false);
+        });
+      }
+    }
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -233,6 +251,7 @@ const App: React.FC = () => {
 
   const exportAsPng = async () => {
     if (chartRef.current && scrollContainerRef.current) {
+      setIsExporting(true);
       const chartElement = chartRef.current;
       const scrollContainer = scrollContainerRef.current;
       const scrollWrapper = scrollWrapperRef.current;
@@ -268,6 +287,9 @@ const App: React.FC = () => {
           forest: '#ecfdf5', // bg-emerald-50
         };
 
+        // Wait a bit for styles to apply (helps with rendering on some devices)
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const blob = await htmlToImage.toBlob(chartElement, { 
           quality: 1, 
           backgroundColor: themeBgColors[themeKey] || '#ffffff',
@@ -291,38 +313,47 @@ const App: React.FC = () => {
            throw new Error('Could not generate image blob');
         }
 
-        // Try Web Share API first (works best on Android/iOS)
-        const file = new File([blob], `timeline-${Date.now()}.png`, { type: 'image/png' });
+        const fileName = `timeline-${Date.now()}.png`;
+        const file = new File([blob], fileName, { type: 'image/png' });
         
+        // Try Web Share API first (works best on Android/iOS)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
-              title: 'EzTimeline Export',
-              text: 'My Timeline created with EzTimeline',
+              title: 'Timeline Export',
+              text: 'My timeline chart',
             });
-            return;
           } catch (shareError) {
-            console.warn('Sharing failed or cancelled', shareError);
-            // If share fails (e.g. user cancelled), we might still want to try download or just stop.
-            // Usually if user cancelled, we stop. If it failed technically, we try download.
-            // Let's fall back to download just in case.
+            if ((shareError as Error).name !== 'AbortError') {
+              // Fallback to download if share fails (but not if user aborted)
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }
           }
+        } else {
+          // Fallback for desktop or browsers without share support
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
         }
-
-        // Fallback to standard download
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `timeline-${Date.now()}.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
 
       } catch (err) {
         console.error('Export failed', err);
         alert('เกิดข้อผิดพลาดในการส่งออกรูปภาพ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setIsExporting(false);
       }
     }
   };
@@ -693,15 +724,32 @@ const App: React.FC = () => {
                  <span className="w-[2px] h-4 bg-black mx-1"></span>
                  <span className="text-slate-600">Created with BigBundit</span>
              </div>
-             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260219.2359.1</span>
+             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260220.0225</span>
           </div>
         </div>
       </main>
 
+      {/* Loading Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-xl font-bold animate-pulse">กำลังสร้างรูปภาพ...</p>
+          <p className="text-sm text-white/60 mt-2">กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)</p>
+        </div>
+      )}
+
       {/* Floating Action Buttons */}
       <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
-        {/* JSON Controls */}
+        {/* JSON Controls & Fullscreen */}
         <div className="flex bg-white rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black p-2 gap-2">
+          <button 
+            onClick={toggleFullscreen}
+            className="flex items-center justify-center w-10 h-10 text-black hover:bg-slate-100 rounded-full transition-all border border-transparent hover:border-slate-200"
+            title="เต็มจอ"
+          >
+            {isFullscreen ? <X className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+          </button>
+          <div className="w-[2px] bg-black my-1"></div>
           <input 
               type="file" 
               ref={fileInputRef} 
