@@ -6,6 +6,7 @@ import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
 import TimelineChart from './components/TimelineChart';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([
@@ -441,30 +442,17 @@ const App: React.FC = () => {
         const fileName = `timeline-${Date.now()}.png`;
         
         if (Capacitor.isNativePlatform()) {
-          // Request permissions if needed
-          const permStatus = await Filesystem.requestPermissions();
-          if (permStatus.publicStorage !== 'granted') {
-            alert('Permission denied to save files');
-            return;
-          }
-          
-          // Convert blob to base64
-          const reader = new FileReader();
-          reader.readAsDataURL(blob);
-          await new Promise(resolve => reader.onloadend);
-          const base64Data = (reader.result as string).split(',')[1];
-          
-          // Save to documents directory
+          // Use Share API for native platforms
+          const file = new File([blob], fileName, { type: 'image/png' });
           try {
-            const result = await Filesystem.writeFile({
-              path: fileName,
-              data: base64Data,
-              directory: Directory.Documents,
+            await Share.share({
+              files: [file],
+              title: 'Timeline Export',
+              text: 'My timeline chart',
             });
-            alert(`Image saved to Documents: ${result.uri}`);
           } catch (error) {
-            console.error('Failed to save file:', error);
-            alert('Failed to save image');
+            console.error('Share failed:', error);
+            alert('Failed to share image');
           }
         } else {
           // Web fallback
