@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2, MoveHorizontal, FileJson, Upload, Palette, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2, MoveHorizontal, FileJson, Upload, Palette, ChevronDown, ChevronRight, Layers, ClipboardPaste, ExternalLink } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
 import TimelineChart from './components/TimelineChart';
@@ -29,6 +29,70 @@ const App: React.FC = () => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [exportedImage, setExportedImage] = useState<string | null>(null);
+  const [exportedConfig, setExportedConfig] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [importText, setImportText] = useState<string>('');
+  const [language, setLanguage] = useState<'th' | 'en'>('th');
+
+  const t = (key: string) => {
+    const translations: Record<string, { th: string, en: string }> = {
+      // General
+      'project_title_placeholder': { th: 'ชื่อโครงการ...', en: 'Project Name...' },
+      'description_placeholder': { th: 'คำอธิบาย...', en: 'Description...' },
+      'daily_scale': { th: 'รายวัน', en: 'Daily' },
+      'weekly_scale': { th: 'รายสัปดาห์', en: 'Weekly' },
+      'monthly_scale': { th: 'รายเดือน', en: 'Monthly' },
+      'daily_scale_label': { th: 'Daily Scale', en: 'Daily Scale' },
+      'weekly_scale_label': { th: 'Weekly Scale', en: 'Weekly Scale' },
+      'monthly_scale_label': { th: 'Monthly Scale', en: 'Monthly Scale' },
+      
+      // Sidebar
+      'display_settings': { th: 'การแสดงผล', en: 'Display Settings' },
+      'column_count': { th: 'จำนวนช่อง', en: 'Columns' },
+      'column_width': { th: 'ความกว้าง', en: 'Width' },
+      'vertical_lines': { th: 'เส้นตารางแนวตั้ง', en: 'Vertical Lines' },
+      'theme': { th: 'ธีมสี', en: 'Theme' },
+      'header_groups': { th: 'กลุ่มเวลา (Header)', en: 'Header Groups' },
+      'header_new': { th: 'หัวข้อใหม่', en: 'New Header' },
+      'header_placeholder': { th: 'ชื่อกลุ่ม...', en: 'Group Name...' },
+      'start': { th: 'เริ่ม', en: 'Start' },
+      'end': { th: 'ถึง', en: 'End' },
+      'tasks': { th: 'รายการงาน', en: 'Tasks' },
+      'add': { th: 'เพิ่ม', en: 'Add' },
+      'task_new': { th: 'รายการใหม่', en: 'New Task' },
+      'task_placeholder': { th: 'ชื่องาน...', en: 'Task Name...' },
+      'no_tasks': { th: 'ไม่มีรายการงาน', en: 'No tasks available' },
+      
+      // Buttons & Modals
+      'save_config': { th: 'บันทึก Config', en: 'Save Config' },
+      'paste_config': { th: 'วาง Config', en: 'Paste Config' },
+      'load_file': { th: 'โหลดไฟล์', en: 'Load File' },
+      'export_png': { th: 'ส่งออกเป็นรูปภาพ (PNG)', en: 'Export as PNG' },
+      'import_config_title': { th: 'นำเข้า Config (JSON)', en: 'Import Config (JSON)' },
+      'import_config_desc': { th: 'วางโค้ด JSON ที่ได้จากการบันทึก Config ลงในช่องด้านล่าง', en: 'Paste the JSON code from your saved config below' },
+      'cancel': { th: 'ยกเลิก', en: 'Cancel' },
+      'import': { th: 'นำเข้า Config', en: 'Import Config' },
+      'image_ready': { th: 'รูปภาพพร้อมแล้ว!', en: 'Image Ready!' },
+      'save_image_hint_mobile': { th: 'แตะค้างที่รูปภาพเพื่อบันทึก (Save Image)', en: 'Long press image to save' },
+      'save_image_hint_desktop': { th: 'คลิกขวาที่รูปภาพเพื่อบันทึก', en: 'Right click image to save' },
+      'download': { th: 'ดาวน์โหลด', en: 'Download' },
+      'download_image': { th: 'ดาวน์โหลดรูปภาพ', en: 'Download Image' },
+      'open_new_tab': { th: 'เปิดแท็บใหม่', en: 'Open New Tab' },
+      'config_json': { th: 'Config JSON', en: 'Config JSON' },
+      'config_fallback_desc': { th: 'หากไม่สามารถบันทึกไฟล์ได้ ให้คัดลอกข้อความด้านล่างเก็บไว้ แล้วนำมาวางในไฟล์ .json เพื่อโหลดภายหลัง', en: 'If file save fails, copy the text below and save it as a .json file for later loading.' },
+      'copy_config': { th: 'คัดลอก Config', en: 'Copy Config' },
+      'copy_success': { th: 'คัดลอกเรียบร้อย!', en: 'Copied!' },
+      'loading_image': { th: 'กำลังสร้างรูปภาพ...', en: 'Generating Image...' },
+      'loading_wait': { th: 'กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)', en: 'Please wait (may take 5-10 seconds)' },
+      'error_export': { th: 'เกิดข้อผิดพลาดในการส่งออกรูปภาพ กรุณาลองใหม่อีกครั้ง', en: 'Error exporting image. Please try again.' },
+      'error_config_load': { th: 'เกิดข้อผิดพลาดในการโหลด Config', en: 'Error loading config' },
+      'config_loaded': { th: 'โหลด Config เรียบร้อย!', en: 'Config loaded successfully!' },
+      'invalid_json': { th: 'รูปแบบ JSON ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', en: 'Invalid JSON format. Please check again.' },
+      'config_invalid_file': { th: 'เกิดข้อผิดพลาด: ไฟล์ Config ไม่ถูกต้อง', en: 'Error: Invalid config file' },
+      'popup_blocked': { th: 'Pop-up ถูกบล็อก กรุณาอนุญาต Pop-up', en: 'Pop-up blocked. Please allow pop-ups.' },
+    };
+    return translations[key]?.[language] || key;
+  };
   
   // Initialize date with local time to avoid timezone issues
   const [projectDate, setProjectDate] = useState<string>(() => {
@@ -71,7 +135,7 @@ const App: React.FC = () => {
   const addTask = () => {
     const newTask: Task = {
       id: Date.now().toString(),
-      label: 'รายการใหม่',
+      label: t('task_new'),
       slots: [],
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
     };
@@ -94,7 +158,7 @@ const App: React.FC = () => {
     const newEnd = newStart + 3; 
     const newGroup: HeaderGroup = {
       id: Date.now().toString(),
-      label: 'หัวข้อใหม่',
+      label: t('header_new'),
       start: newStart,
       end: newEnd
     };
@@ -227,22 +291,50 @@ const App: React.FC = () => {
         return;
       } catch (shareError) {
         if ((shareError as Error).name !== 'AbortError') {
-           // Fallback to download
+           // Fallback to modal if share fails
+           setExportedConfig(jsonString);
         } else {
            return; // User cancelled share
         }
       }
+    } else {
+      // Fallback: Direct Download or Modal
+      try {
+        const url = URL.createObjectURL(blob);
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.href = url;
+        downloadAnchorNode.download = fileName;
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        document.body.removeChild(downloadAnchorNode);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // If download fails, show modal
+        setExportedConfig(jsonString);
+      }
     }
+  };
 
-    // Fallback: Direct Download
-    const url = URL.createObjectURL(blob);
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.href = url;
-    downloadAnchorNode.download = fileName;
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    document.body.removeChild(downloadAnchorNode);
-    URL.revokeObjectURL(url);
+  const applyConfig = (config: any) => {
+    try {
+      if (config.tasks) setTasks(config.tasks);
+      if (config.headerGroups) setHeaderGroups(config.headerGroups);
+      if (config.scale) setScale(config.scale);
+      if (config.themeKey) setThemeKey(config.themeKey);
+      if (config.title) setTitle(config.title);
+      if (config.description) setDescription(config.description);
+      if (config.columnCount) setColumnCount(config.columnCount);
+      if (config.minColumnWidth) setMinColumnWidth(config.minColumnWidth);
+      if (config.taskListWidth) setTaskListWidth(config.taskListWidth);
+      if (config.showVerticalLines !== undefined) setShowVerticalLines(config.showVerticalLines);
+      if (config.customTimeLabels) setCustomTimeLabels(config.customTimeLabels);
+      if (config.taskListLabel) setTaskListLabel(config.taskListLabel);
+      if (config.projectDate) setProjectDate(config.projectDate);
+      alert(t('config_loaded'));
+    } catch (error) {
+      console.error('Error applying config:', error);
+      alert(t('error_config_load'));
+    }
   };
 
   const handleImportConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,26 +346,26 @@ const App: React.FC = () => {
       try {
         const json = e.target?.result as string;
         const config = JSON.parse(json);
-        
-        if (config.tasks) setTasks(config.tasks);
-        if (config.headerGroups) setHeaderGroups(config.headerGroups);
-        if (config.scale) setScale(config.scale);
-        if (config.themeKey) setThemeKey(config.themeKey);
-        if (config.title) setTitle(config.title);
-        if (config.description) setDescription(config.description);
-        if (config.columnCount) setColumnCount(config.columnCount);
-        if (config.minColumnWidth) setMinColumnWidth(config.minColumnWidth);
-        if (config.taskListWidth) setTaskListWidth(config.taskListWidth);
-        if (config.showVerticalLines !== undefined) setShowVerticalLines(config.showVerticalLines);
-        if (config.customTimeLabels) setCustomTimeLabels(config.customTimeLabels);
-        if (config.taskListLabel) setTaskListLabel(config.taskListLabel);
+        applyConfig(config);
       } catch (error) {
         console.error('Error parsing JSON:', error);
-        alert('เกิดข้อผิดพลาด: ไฟล์ Config ไม่ถูกต้อง');
+        alert(t('config_invalid_file'));
       }
     };
     reader.readAsText(fileObj);
     event.target.value = '';
+  };
+
+  const handleImportText = () => {
+    if (!importText.trim()) return;
+    try {
+      const config = JSON.parse(importText);
+      applyConfig(config);
+      setShowImportModal(false);
+      setImportText('');
+    } catch (error) {
+      alert(t('invalid_json'));
+    }
   };
 
   const exportAsPng = async () => {
@@ -463,7 +555,7 @@ const App: React.FC = () => {
           {/* Section: Display Settings */}
           <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-5">
              <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider mb-1">
-              <Palette className="w-4 h-4 text-black" /> การแสดงผล
+              <Palette className="w-4 h-4 text-black" /> {t('display_settings')}
             </div>
 
             {/* Time Scale Segmented Control */}
@@ -482,14 +574,14 @@ const App: React.FC = () => {
                       : 'border-transparent text-slate-500 hover:text-black hover:bg-blue-200'
                   }`}
                 >
-                  {s === 'DAILY' ? 'รายวัน' : s === 'WEEKLY' ? 'รายสัปดาห์' : 'รายเดือน'}
+                  {s === 'DAILY' ? t('daily_scale') : s === 'WEEKLY' ? t('weekly_scale') : t('monthly_scale')}
                 </button>
               ))}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">จำนวนช่อง</label>
+                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">{t('column_count')}</label>
                 <div className="relative group">
                   <Hash className="absolute left-3 top-3 w-4 h-4 text-slate-400 group-focus-within:text-black transition-colors" />
                   <input 
@@ -503,7 +595,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ความกว้าง</label>
+                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">{t('column_width')}</label>
                 <div className="flex items-center h-[42px] border-2 border-black rounded-xl bg-white overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   <button 
                     onClick={() => setMinColumnWidth(prev => Math.max(30, prev - 5))}
@@ -528,14 +620,14 @@ const App: React.FC = () => {
                   : 'bg-white text-slate-500'
               }`}
             >
-              <span>เส้นตารางแนวตั้ง</span>
+              <span>{t('vertical_lines')}</span>
               <div className={`w-10 h-5 rounded-full relative transition-colors border-2 border-black ${showVerticalLines ? 'bg-blue-500' : 'bg-slate-200'}`}>
                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full border border-black transition-transform ${showVerticalLines ? 'left-5 translate-x-0.5' : 'left-0.5'}`} />
               </div>
             </button>
             
             <div>
-              <label className="text-[10px] font-bold text-slate-500 mb-2 block uppercase">ธีมสี</label>
+              <label className="text-[10px] font-bold text-slate-500 mb-2 block uppercase">{t('theme')}</label>
               <div className="grid grid-cols-2 gap-3">
                 {Object.keys(THEMES).map(key => (
                   <button
@@ -559,7 +651,7 @@ const App: React.FC = () => {
           <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
              <div className="flex items-center justify-between mb-1">
                <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider">
-                 <Layers className="w-4 h-4 text-black" /> กลุ่มเวลา (Header)
+                 <Layers className="w-4 h-4 text-black" /> {t('header_groups')}
                </div>
                <button 
                  onClick={addHeaderGroup}
@@ -579,7 +671,7 @@ const App: React.FC = () => {
                           value={group.label}
                           onChange={(e) => updateHeaderGroup(group.id, { label: e.target.value })}
                           className="w-full bg-white border-2 border-black rounded-lg px-2 py-1 text-xs font-bold text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          placeholder="ชื่อกลุ่ม..."
+                          placeholder={t('header_placeholder')}
                         />
                       </div>
                       <button onClick={() => removeHeaderGroup(group.id)} className="text-slate-400 hover:text-red-500 transition-colors">
@@ -588,7 +680,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                        <div className="flex items-center gap-2 bg-white border-2 border-black rounded-lg px-2 py-1 flex-1">
-                         <span className="text-[10px] text-slate-500 font-bold uppercase">เริ่ม</span>
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">{t('start')}</span>
                          <input 
                             type="number" min={1}
                             value={group.start + 1}
@@ -598,7 +690,7 @@ const App: React.FC = () => {
                        </div>
                        <div className="text-black font-bold">-</div>
                        <div className="flex items-center gap-2 bg-white border-2 border-black rounded-lg px-2 py-1 flex-1">
-                         <span className="text-[10px] text-slate-500 font-bold uppercase">ถึง</span>
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">{t('end')}</span>
                          <input 
                             type="number" min={1}
                             value={group.end + 1}
@@ -616,13 +708,13 @@ const App: React.FC = () => {
           <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col min-h-[250px]">
              <div className="flex items-center justify-between mb-4">
                <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider">
-                 <MoveHorizontal className="w-4 h-4 text-black" /> รายการงาน
+                 <MoveHorizontal className="w-4 h-4 text-black" /> {t('tasks')}
                </div>
                <button 
                  onClick={addTask}
                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border-2 border-black text-black text-[10px] font-bold hover:bg-blue-50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                >
-                 <Plus className="w-3.5 h-3.5" /> เพิ่ม
+                 <Plus className="w-3.5 h-3.5" /> {t('add')}
                </button>
              </div>
              
@@ -642,7 +734,7 @@ const App: React.FC = () => {
                       value={task.label}
                       onChange={(e) => updateTask(task.id, { label: e.target.value })}
                       className="flex-1 bg-transparent border-none text-xs font-bold text-black p-0 focus:ring-0 placeholder:text-slate-400"
-                      placeholder="ชื่องาน..."
+                      placeholder={t('task_placeholder')}
                     />
                     <button 
                       onClick={() => removeTask(task.id)}
@@ -654,7 +746,7 @@ const App: React.FC = () => {
                ))}
                {tasks.length === 0 && (
                  <div className="text-center py-8 text-xs text-slate-400 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
-                   ไม่มีรายการงาน
+                   {t('no_tasks')}
                  </div>
                )}
              </div>
@@ -691,13 +783,13 @@ const App: React.FC = () => {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="w-full bg-transparent border-none p-0 text-3xl md:text-5xl font-black mb-3 tracking-tight focus:ring-0 placeholder:text-slate-300 outline-none text-black"
-                      placeholder="ชื่อโครงการ..."
+                      placeholder={t('project_title_placeholder')}
                     />
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className="w-full bg-transparent border-none p-0 text-sm md:text-lg opacity-80 font-bold resize-none focus:ring-0 placeholder:text-slate-300 outline-none text-slate-600"
-                      placeholder="คำอธิบาย..."
+                      placeholder={t('description_placeholder')}
                       rows={1}
                       onInput={(e) => {
                          const target = e.target as HTMLTextAreaElement;
@@ -733,7 +825,7 @@ const App: React.FC = () => {
                       />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-blue-200 px-3 py-1 rounded-full border-2 border-black">
-                      <Clock className="w-3.5 h-3.5" /> {scale === TimelineScale.DAILY ? 'Daily Scale' : scale === TimelineScale.WEEKLY ? 'Weekly Scale' : 'Monthly Scale'}
+                      <Clock className="w-3.5 h-3.5" /> {scale === TimelineScale.DAILY ? t('daily_scale_label') : scale === TimelineScale.WEEKLY ? t('weekly_scale_label') : t('monthly_scale_label')}
                     </span>
                   </div>
                 </div>
@@ -780,11 +872,11 @@ const App: React.FC = () => {
           <div className="mt-8 flex flex-col items-center gap-2 pb-24">
              <div className="flex items-center gap-3 px-5 py-2.5 bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xs text-black font-bold transform -rotate-1 hover:rotate-0 transition-transform cursor-default">
                  <Maximize2 className="w-4 h-4 text-blue-500" />
-                 <span>คลิ๊กในช่องเพื่อแก้ไข / เลื่อนแนวนอนเพื่อดู</span>
+                 <span>{t('edit_hint')}</span>
                  <span className="w-[2px] h-4 bg-black mx-1"></span>
                  <span className="text-slate-600">Created with BigBundit</span>
              </div>
-             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260220.0659</span>
+             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260220.0750</span>
           </div>
         </div>
       </main>
@@ -793,8 +885,45 @@ const App: React.FC = () => {
       {isExporting && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white">
           <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-xl font-bold animate-pulse">กำลังสร้างรูปภาพ...</p>
-          <p className="text-sm text-white/60 mt-2">กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)</p>
+          <p className="text-xl font-bold animate-pulse">{t('loading_image')}</p>
+          <p className="text-sm text-white/60 mt-2">{t('loading_wait')}</p>
+        </div>
+      )}
+
+      {/* Import Config Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4" onClick={() => setShowImportModal(false)}>
+          <div className="bg-white p-4 rounded-2xl w-full max-w-lg flex flex-col gap-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b pb-2 border-slate-200">
+              <h3 className="font-bold text-lg text-black">{t('import_config_title')}</h3>
+              <button onClick={() => setShowImportModal(false)} className="p-1 hover:bg-slate-100 rounded-full">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              {t('import_config_desc')}
+            </p>
+            <textarea 
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              className="w-full h-48 bg-slate-100 border border-slate-200 rounded-lg p-2 text-xs font-mono text-black focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder:text-slate-400"
+              placeholder='{"version": 1, "tasks": [...]}'
+            />
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowImportModal(false)}
+                className="flex-1 bg-slate-200 text-slate-700 px-4 py-3 rounded-full font-bold hover:bg-slate-300 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button 
+                onClick={handleImportText}
+                className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors shadow-lg"
+              >
+                {t('import')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -803,7 +932,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4" onClick={() => setExportedImage(null)}>
           <div className="bg-white p-4 rounded-2xl max-w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b pb-2 border-slate-200">
-              <h3 className="font-bold text-lg text-black">รูปภาพพร้อมแล้ว!</h3>
+              <h3 className="font-bold text-lg text-black">{t('image_ready')}</h3>
               <button onClick={() => setExportedImage(null)} className="p-1 hover:bg-slate-100 rounded-full">
                 <X className="w-6 h-6 text-slate-500" />
               </button>
@@ -811,33 +940,80 @@ const App: React.FC = () => {
             <div className="flex-1 overflow-auto flex items-center justify-center bg-slate-100 rounded-lg border border-slate-200 p-2">
               <img src={exportedImage} alt="Exported Timeline" className="max-w-full h-auto object-contain shadow-md" />
             </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-blue-600 mb-2">
-                <span className="md:hidden">แตะค้างที่รูปภาพเพื่อบันทึก (Save Image)</span>
-                <span className="hidden md:inline">คลิกขวาที่รูปภาพเพื่อบันทึก</span>
+            <div className="text-center space-y-2">
+              <p className="text-sm font-bold text-blue-600">
+                <span className="md:hidden">{t('save_image_hint_mobile')}</span>
+                <span className="hidden md:inline">{t('save_image_hint_desktop')}</span>
               </p>
-              <a 
-                href={exportedImage} 
-                download={`timeline-${Date.now()}.png`}
-                className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors w-full justify-center md:w-auto"
-              >
-                <Download className="w-4 h-4" /> ดาวน์โหลดรูปภาพ
-              </a>
+              <div className="flex flex-col md:flex-row gap-2 justify-center">
+                <a 
+                  href={exportedImage} 
+                  download={`timeline-${Date.now()}.png`}
+                  className="inline-flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors w-full md:w-auto"
+                >
+                  <Download className="w-4 h-4" /> {t('download')}
+                </a>
+                <button
+                  onClick={() => {
+                    const win = window.open();
+                    if (win) {
+                      win.document.write(`<iframe src="${exportedImage}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                    } else {
+                      alert(t('popup_blocked'));
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 bg-white border-2 border-black text-black px-6 py-3 rounded-full font-bold hover:bg-slate-50 transition-colors w-full md:w-auto"
+                >
+                  <ExternalLink className="w-4 h-4" /> {t('open_new_tab')}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exported Config Modal (Fallback) */}
+      {exportedConfig && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4" onClick={() => setExportedConfig(null)}>
+          <div className="bg-white p-4 rounded-2xl w-full max-w-lg flex flex-col gap-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b pb-2 border-slate-200">
+              <h3 className="font-bold text-lg text-black">{t('config_json')}</h3>
+              <button onClick={() => setExportedConfig(null)} className="p-1 hover:bg-slate-100 rounded-full">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              {t('config_fallback_desc')}
+            </p>
+            <textarea 
+              readOnly
+              value={exportedConfig}
+              className="w-full h-48 bg-slate-100 border border-slate-200 rounded-lg p-2 text-xs font-mono text-slate-600 focus:outline-none resize-none"
+              onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+            />
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(exportedConfig);
+                alert(t('copy_success'));
+              }}
+              className="bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors w-full flex items-center justify-center gap-2"
+            >
+              <FileJson className="w-4 h-4" /> {t('copy_config')}
+            </button>
           </div>
         </div>
       )}
 
       {/* Floating Action Buttons */}
       <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
-        {/* JSON Controls & Fullscreen */}
+        {/* JSON Controls & Language Toggle */}
         <div className="flex bg-white rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black p-2 gap-2">
           <button 
-            onClick={toggleFullscreen}
-            className="flex items-center justify-center w-10 h-10 text-black hover:bg-slate-100 rounded-full transition-all border border-transparent hover:border-slate-200"
-            title="เต็มจอ"
+            onClick={() => setLanguage(prev => prev === 'th' ? 'en' : 'th')}
+            className="flex items-center justify-center w-10 h-10 text-black hover:bg-slate-100 rounded-full transition-all border border-transparent hover:border-slate-200 font-black text-xs"
+            title={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
           >
-            {isFullscreen ? <X className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            {language.toUpperCase()}
           </button>
           <div className="w-[2px] bg-black my-1"></div>
           <input 
@@ -852,15 +1028,22 @@ const App: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 text-black hover:bg-slate-100 rounded-full transition-all text-xs font-bold border border-transparent hover:border-slate-200"
           >
             <FileJson className="w-4 h-4" /> 
-            <span>บันทึก Config</span>
+            <span>{t('save_config')}</span>
           </button>
           <div className="w-[2px] bg-black my-1"></div>
+          <button 
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-black hover:bg-slate-100 rounded-full transition-all text-xs font-bold border border-transparent hover:border-slate-200"
+          >
+            <ClipboardPaste className="w-4 h-4" /> 
+            <span>{t('paste_config')}</span>
+          </button>
           <button 
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-2 px-4 py-2 text-black hover:bg-slate-100 rounded-full transition-all text-xs font-bold border border-transparent hover:border-slate-200"
           >
             <Upload className="w-4 h-4" /> 
-            <span>โหลด Config</span>
+            <span>{t('load_file')}</span>
           </button>
         </div>
 
@@ -870,7 +1053,7 @@ const App: React.FC = () => {
           className="group flex items-center gap-3 bg-green-500 text-white px-8 py-4 rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black hover:bg-green-400 hover:scale-[1.02] active:scale-95 active:shadow-none active:translate-x-[6px] active:translate-y-[6px] transition-all"
         >
           <Download className="w-6 h-6 group-hover:animate-bounce" /> 
-          <span className="font-black text-base drop-shadow-md" style={{ textShadow: '1px 1px 0 #000' }}>ส่งออกเป็นรูปภาพ (PNG)</span>
+          <span className="font-black text-base drop-shadow-md" style={{ textShadow: '1px 1px 0 #000' }}>{t('export_png')}</span>
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 {
   "name": "EzTimeline",
   "description": "A simple and intuitive timeline/Gantt chart creator that allows users to toggle time slots, choose scales (Daily, Weekly, Monthly), and export their work as a PNG image.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["clipboard-write"]
 }
