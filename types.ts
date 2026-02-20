@@ -26,12 +26,24 @@ export interface TimelineTheme {
   text: string;
   accent: string;
   headerGroupBg: string; // Background for the top header row (groups)
+  headerGroupText?: string; // Specific text color for header groups
   headerRowBg: string;   // Background for the time scale row (days/weeks)
   hover: string;
   inputBg: string;
 }
 
 export const THEMES: Record<string, TimelineTheme> = {
+  cartoon: {
+    name: 'Cartoon Fun',
+    bg: 'bg-white',
+    grid: 'border-slate-200',
+    text: 'text-slate-800 font-bold',
+    accent: 'bg-yellow-400',
+    headerGroupBg: 'bg-yellow-100',
+    headerRowBg: 'bg-yellow-50',
+    hover: 'hover:bg-yellow-50',
+    inputBg: 'focus:bg-yellow-50'
+  },
   modern: {
     name: 'Modern Blue',
     bg: 'bg-white',
@@ -49,7 +61,8 @@ export const THEMES: Record<string, TimelineTheme> = {
     grid: 'border-zinc-800', // Slightly lighter than black for visibility
     text: 'text-zinc-100',
     accent: 'bg-indigo-500',
-    headerGroupBg: 'bg-zinc-900',
+    headerGroupBg: 'bg-zinc-800',
+    headerGroupText: 'text-black',
     headerRowBg: 'bg-zinc-900',
     hover: 'hover:bg-zinc-900',
     inputBg: 'focus:bg-zinc-800'

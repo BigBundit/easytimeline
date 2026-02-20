@@ -15,7 +15,7 @@ const App: React.FC = () => {
     { id: 'g1', label: 'มกราคม', start: 0, end: 3 }
   ]);
   const [scale, setScale] = useState<TimelineScale>(TimelineScale.DAILY);
-  const [themeKey, setThemeKey] = useState<string>('modern');
+  const [themeKey, setThemeKey] = useState<string>('cartoon');
   const [title, setTitle] = useState<string>('แผนผังระยะเวลาโครงการ (Timeline)');
   const [description, setDescription] = useState<string>('กำหนดการและขั้นตอนการดำเนินงานที่สำคัญของทีม');
   const [columnCount, setColumnCount] = useState<number>(20);
@@ -271,18 +271,18 @@ const App: React.FC = () => {
   const currentTheme = THEMES[themeKey];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row relative overflow-x-hidden text-slate-700 font-sans">
+    <div className="min-h-screen bg-amber-300 flex flex-col md:flex-row relative overflow-x-hidden text-black font-['Prompt']">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+      <div className="md:hidden flex items-center justify-between p-4 bg-blue-400 border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_0px_rgba(0,0,0,0.2)]">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+          <div className="p-2 bg-white border-2 border-black rounded-lg text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
              <LayoutGrid className="w-5 h-5" />
           </div>
-          <span className="font-bold text-slate-800 text-sm">Timeline Maker</span>
+          <span className="font-bold text-white text-lg drop-shadow-md" style={{ textShadow: '2px 2px 0 #000' }}>EzTimeline</span>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 bg-white border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all"
         >
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -290,34 +290,34 @@ const App: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-80 bg-slate-100/50 border-r border-slate-200 flex flex-col shadow-2xl transition-transform duration-300 transform backdrop-blur-sm
-        md:translate-x-0 md:static md:z-auto md:shadow-none md:bg-slate-50
+        fixed inset-y-0 left-0 z-40 w-80 bg-blue-400 border-r-4 border-black flex flex-col shadow-2xl transition-transform duration-300 transform
+        md:translate-x-0 md:static md:z-auto md:shadow-none
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Sidebar Header */}
-        <div className="p-5 border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl text-white shadow-lg shadow-blue-500/30">
-              <LayoutGrid className="w-5 h-5" />
+        <div className="p-6 border-b-4 border-black bg-blue-500">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2.5 bg-white border-2 border-black rounded-xl text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <LayoutGrid className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-800 leading-tight">Timeline Maker</h1>
-              <p className="text-[10px] text-slate-500 font-medium">Professional Tool</p>
+              <h1 className="text-xl font-black text-white leading-tight tracking-wide" style={{ textShadow: '2px 2px 0 #000' }}>EzTimeline</h1>
+              <p className="text-xs text-blue-100 font-bold tracking-wider opacity-90">Professional Tool</p>
             </div>
           </div>
         </div>
 
         {/* Sidebar Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6 bg-blue-400">
           
           {/* Section: Display Settings */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-1">
-              <Palette className="w-3.5 h-3.5 text-blue-500" /> การแสดงผล
+          <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-5">
+             <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider mb-1">
+              <Palette className="w-4 h-4 text-black" /> การแสดงผล
             </div>
 
             {/* Time Scale Segmented Control */}
-            <div className="bg-slate-100 p-1 rounded-xl flex shadow-inner">
+            <div className="bg-blue-100 p-1.5 rounded-xl border-2 border-black flex shadow-inner">
               {(['DAILY', 'WEEKLY', 'MONTHLY'] as TimelineScale[]).map((s) => (
                 <button 
                   key={s}
@@ -326,10 +326,10 @@ const App: React.FC = () => {
                     if (s === TimelineScale.DAILY) setColumnCount(20);
                     else setColumnCount(12);
                   }}
-                  className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
+                  className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all duration-200 border-2 ${
                     scale === s 
-                      ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' 
-                      : 'text-slate-400 hover:text-slate-600'
+                      ? 'bg-white border-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[-1px] translate-y-[-1px]' 
+                      : 'border-transparent text-slate-500 hover:text-black hover:bg-blue-200'
                   }`}
                 >
                   {s === 'DAILY' ? 'รายวัน' : s === 'WEEKLY' ? 'รายสัปดาห์' : 'รายเดือน'}
@@ -337,34 +337,34 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 mb-1 block">จำนวนช่อง</label>
-                <div className="relative">
-                  <Hash className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
+                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">จำนวนช่อง</label>
+                <div className="relative group">
+                  <Hash className="absolute left-3 top-3 w-4 h-4 text-slate-400 group-focus-within:text-black transition-colors" />
                   <input 
                     type="number" 
                     min={1} 
                     max={100}
                     value={columnCount}
                     onChange={(e) => setColumnCount(Number(e.target.value))}
-                    className="w-full pl-8 pr-2 py-2 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                    className="w-full pl-9 pr-2 py-2.5 border-2 border-black bg-white rounded-xl text-sm font-bold text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] focus:shadow-none focus:translate-x-[3px] focus:translate-y-[3px] outline-none transition-all"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 mb-1 block">ความกว้างช่อง</label>
-                <div className="flex items-center h-[34px] border border-slate-200 rounded-lg bg-white overflow-hidden">
+                <label className="text-[10px] font-bold text-slate-500 mb-1 block uppercase">ความกว้าง</label>
+                <div className="flex items-center h-[42px] border-2 border-black rounded-xl bg-white overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   <button 
                     onClick={() => setMinColumnWidth(prev => Math.max(30, prev - 5))}
-                    className="h-full px-2 hover:bg-slate-200 text-slate-500 transition-colors"
+                    className="h-full px-3 hover:bg-slate-100 text-black font-bold transition-colors border-r-2 border-black"
                   >-</button>
-                  <div className="flex-1 text-center text-xs font-bold text-slate-700 select-none">
+                  <div className="flex-1 text-center text-sm font-bold text-black select-none">
                     {minColumnWidth}
                   </div>
                   <button 
                     onClick={() => setMinColumnWidth(prev => Math.min(200, prev + 5))}
-                    className="h-full px-2 hover:bg-slate-200 text-slate-500 transition-colors"
+                    className="h-full px-3 hover:bg-slate-100 text-black font-bold transition-colors border-l-2 border-black"
                   >+</button>
                 </div>
               </div>
@@ -372,33 +372,33 @@ const App: React.FC = () => {
 
             <button 
               onClick={() => setShowVerticalLines(!showVerticalLines)}
-              className={`w-full py-2 px-3 border rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              className={`w-full py-2.5 px-4 border-2 border-black rounded-xl text-xs font-bold flex items-center justify-between transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] ${
                 showVerticalLines 
-                  ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                  : 'bg-white border-slate-200 text-slate-500'
+                  ? 'bg-blue-100 text-blue-900' 
+                  : 'bg-white text-slate-500'
               }`}
             >
               <span>เส้นตารางแนวตั้ง</span>
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${showVerticalLines ? 'bg-blue-500' : 'bg-slate-300'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${showVerticalLines ? 'left-4.5 translate-x-1' : 'left-0.5'}`} />
+              <div className={`w-10 h-5 rounded-full relative transition-colors border-2 border-black ${showVerticalLines ? 'bg-blue-500' : 'bg-slate-200'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full border border-black transition-transform ${showVerticalLines ? 'left-5 translate-x-0.5' : 'left-0.5'}`} />
               </div>
             </button>
             
             <div>
-              <label className="text-[10px] font-semibold text-slate-400 mb-2 block">ธีมสี</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="text-[10px] font-bold text-slate-500 mb-2 block uppercase">ธีมสี</label>
+              <div className="grid grid-cols-2 gap-3">
                 {Object.keys(THEMES).map(key => (
                   <button
                     key={key}
                     onClick={() => setThemeKey(key)}
-                    className={`relative text-[10px] py-2 px-3 border rounded-lg font-bold text-left transition-all overflow-hidden group ${
+                    className={`relative text-[10px] py-2.5 px-3 border-2 border-black rounded-xl font-bold text-left transition-all overflow-hidden group ${
                       themeKey === key 
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm' 
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                        ? 'bg-blue-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[-1px] translate-y-[-1px]' 
+                        : 'bg-white text-slate-500 hover:bg-slate-50'
                     }`}
                   >
                     <span className="relative z-10">{THEMES[key].name}</span>
-                    {themeKey === key && <div className="absolute right-0 top-0 bottom-0 w-1 bg-blue-500" />}
+                    {themeKey === key && <div className="absolute right-0 top-0 bottom-0 w-2 bg-blue-500 border-l-2 border-black" />}
                   </button>
                 ))}
               </div>
@@ -406,54 +406,54 @@ const App: React.FC = () => {
           </div>
 
           {/* Section: Headers */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
              <div className="flex items-center justify-between mb-1">
-               <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
-                 <Layers className="w-3.5 h-3.5 text-blue-500" /> กลุ่มเวลา (Header)
+               <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider">
+                 <Layers className="w-4 h-4 text-black" /> กลุ่มเวลา (Header)
                </div>
                <button 
                  onClick={addHeaderGroup}
-                 className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                 className="w-7 h-7 flex items-center justify-center rounded-full bg-white border-2 border-black text-black hover:bg-blue-50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                >
-                 <Plus className="w-3.5 h-3.5" />
+                 <Plus className="w-4 h-4" />
                </button>
              </div>
              
-             <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+             <div className="space-y-3 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
                 {headerGroups.map(group => (
-                  <div key={group.id} className="p-2 border border-slate-100 rounded-lg bg-white hover:border-slate-300 transition-all group">
+                  <div key={group.id} className="p-3 border-2 border-black rounded-xl bg-slate-50 hover:bg-white transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex-1">
                         <input 
                           type="text" 
                           value={group.label}
                           onChange={(e) => updateHeaderGroup(group.id, { label: e.target.value })}
-                          className="w-full bg-transparent border-none text-[11px] font-bold text-slate-700 p-0 focus:ring-0 placeholder:text-slate-400"
+                          className="w-full bg-white border-2 border-black rounded-lg px-2 py-1 text-xs font-bold text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
                           placeholder="ชื่อกลุ่ม..."
                         />
                       </div>
-                      <button onClick={() => removeHeaderGroup(group.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-3 h-3" />
+                      <button onClick={() => removeHeaderGroup(group.id)} className="text-slate-400 hover:text-red-500 transition-colors">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex items-center gap-2">
-                       <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
-                         <span className="text-[9px] text-slate-400 font-medium">เริ่ม</span>
+                       <div className="flex items-center gap-2 bg-white border-2 border-black rounded-lg px-2 py-1 flex-1">
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">เริ่ม</span>
                          <input 
                             type="number" min={1}
                             value={group.start + 1}
                             onChange={(e) => updateHeaderGroup(group.id, { start: Math.max(0, (parseInt(e.target.value)||1)-1) })}
-                            className="w-8 text-center text-[10px] font-bold border-none p-0 focus:ring-0 text-slate-600 bg-transparent"
+                            className="w-full text-center text-xs font-bold border-none p-0 focus:ring-0 text-black bg-transparent"
                          />
                        </div>
-                       <div className="w-2 h-[1px] bg-slate-300"></div>
-                       <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
-                         <span className="text-[9px] text-slate-400 font-medium">ถึง</span>
+                       <div className="text-black font-bold">-</div>
+                       <div className="flex items-center gap-2 bg-white border-2 border-black rounded-lg px-2 py-1 flex-1">
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">ถึง</span>
                          <input 
                             type="number" min={1}
                             value={group.end + 1}
                             onChange={(e) => updateHeaderGroup(group.id, { end: Math.max(0, (parseInt(e.target.value)||1)-1) })}
-                            className="w-8 text-center text-[10px] font-bold border-none p-0 focus:ring-0 text-slate-600 bg-transparent"
+                            className="w-full text-center text-xs font-bold border-none p-0 focus:ring-0 text-black bg-transparent"
                          />
                        </div>
                     </div>
@@ -463,47 +463,47 @@ const App: React.FC = () => {
           </div>
 
           {/* Section: Tasks */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col min-h-[200px]">
-             <div className="flex items-center justify-between mb-3">
-               <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider">
-                 <MoveHorizontal className="w-3.5 h-3.5 text-blue-500" /> รายการงาน
+          <div className="bg-white p-5 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col min-h-[250px]">
+             <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-2 text-black font-black text-sm uppercase tracking-wider">
+                 <MoveHorizontal className="w-4 h-4 text-black" /> รายการงาน
                </div>
                <button 
                  onClick={addTask}
-                 className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                 className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border-2 border-black text-black text-[10px] font-bold hover:bg-blue-50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                >
-                 <Plus className="w-3 h-3" /> เพิ่ม
+                 <Plus className="w-3.5 h-3.5" /> เพิ่ม
                </button>
              </div>
              
-             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
+             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3">
                {tasks.map(task => (
-                 <div key={task.id} className="group flex items-center gap-2 p-2 border border-slate-100 rounded-lg bg-white hover:shadow-sm hover:border-blue-200 transition-all">
-                    <div className="relative w-5 h-5 rounded-md overflow-hidden flex-shrink-0 cursor-pointer shadow-sm ring-1 ring-black/5 hover:scale-110 transition-transform">
+                 <div key={task.id} className="group flex items-center gap-2 p-2 border-2 border-black rounded-xl bg-slate-50 hover:bg-white transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer border-2 border-black shadow-sm hover:scale-105 transition-transform">
                       <input 
                         type="color" 
                         value={task.color}
                         onChange={(e) => updateTask(task.id, { color: e.target.value })}
-                        className="absolute -top-2 -left-2 w-10 h-10 cursor-pointer"
+                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
                       />
                     </div>
                     <input 
                       type="text" 
                       value={task.label}
                       onChange={(e) => updateTask(task.id, { label: e.target.value })}
-                      className="flex-1 bg-transparent border-none text-[11px] font-semibold text-slate-700 p-0 focus:ring-0 placeholder:text-slate-400"
+                      className="flex-1 bg-transparent border-none text-xs font-bold text-black p-0 focus:ring-0 placeholder:text-slate-400"
                       placeholder="ชื่องาน..."
                     />
                     <button 
                       onClick={() => removeTask(task.id)}
                       className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                  </div>
                ))}
                {tasks.length === 0 && (
-                 <div className="text-center py-6 text-[10px] text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                 <div className="text-center py-8 text-xs text-slate-400 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
                    ไม่มีรายการงาน
                  </div>
                )}
@@ -515,39 +515,39 @@ const App: React.FC = () => {
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30"
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 relative flex flex-col items-center justify-start overflow-hidden bg-slate-100">
+      <main className="flex-1 relative flex flex-col items-center justify-start overflow-hidden bg-amber-300">
          {/* Background Pattern */}
-         <div className="absolute inset-0 z-0 opacity-[0.03]" 
-              style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+         <div className="absolute inset-0 z-0 opacity-[0.1]" 
+              style={{ backgroundImage: 'radial-gradient(#000 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}>
          </div>
 
         <div className="w-full h-full overflow-auto custom-scrollbar p-4 md:p-10 flex flex-col items-center z-10">
           <div 
             ref={chartRef}
-            className={`w-full max-w-full md:w-auto md:min-w-[700px] shadow-2xl shadow-slate-300/50 rounded-2xl overflow-hidden ${currentTheme.bg} transition-all duration-300 border border-slate-200/60 flex flex-col`}
+            className={`w-full max-w-full md:w-auto md:min-w-[800px] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden bg-white transition-all duration-300 border-4 border-black flex flex-col`}
           >
-            <div className="p-6 md:p-12">
-              <header className={`mb-8 border-b border-dashed ${currentTheme.grid} pb-6`}>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="p-6 md:p-10">
+              <header className="mb-8 border-b-4 border-black border-dashed pb-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div className="w-full md:w-2/3">
                     <input
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className={`w-full bg-transparent border-none p-0 text-2xl md:text-4xl font-extrabold mb-2 tracking-tight focus:ring-0 placeholder:text-slate-300 outline-none ${currentTheme.text}`}
-                      placeholder="คลิกเพื่อใส่ชื่อโครงการ..."
+                      className="w-full bg-transparent border-none p-0 text-3xl md:text-5xl font-black mb-3 tracking-tight focus:ring-0 placeholder:text-slate-300 outline-none text-black"
+                      placeholder="ชื่อโครงการ..."
                     />
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className={`w-full bg-transparent border-none p-0 text-sm md:text-base opacity-70 font-light resize-none focus:ring-0 placeholder:text-slate-300 outline-none ${currentTheme.text}`}
-                      placeholder="คลิกเพื่อใส่คำอธิบาย..."
+                      className="w-full bg-transparent border-none p-0 text-sm md:text-lg opacity-80 font-bold resize-none focus:ring-0 placeholder:text-slate-300 outline-none text-slate-600"
+                      placeholder="คำอธิบาย..."
                       rows={1}
                       onInput={(e) => {
                          const target = e.target as HTMLTextAreaElement;
@@ -556,12 +556,12 @@ const App: React.FC = () => {
                       }}
                     />
                   </div>
-                  <div className="flex flex-col items-end gap-1 opacity-60 flex-shrink-0">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${currentTheme.text}`}>
-                      <Calendar className="w-3 h-3" /> {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})}
+                  <div className="flex flex-col items-end gap-2 opacity-80 flex-shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-yellow-200 px-3 py-1 rounded-full border-2 border-black">
+                      <Calendar className="w-3.5 h-3.5" /> {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})}
                     </span>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${currentTheme.text}`}>
-                      <Clock className="w-3 h-3" /> {scale === TimelineScale.DAILY ? 'Daily Scale' : scale === TimelineScale.WEEKLY ? 'Weekly Scale' : 'Monthly Scale'}
+                    <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-blue-200 px-3 py-1 rounded-full border-2 border-black">
+                      <Clock className="w-3.5 h-3.5" /> {scale === TimelineScale.DAILY ? 'Daily Scale' : scale === TimelineScale.WEEKLY ? 'Weekly Scale' : 'Monthly Scale'}
                     </span>
                   </div>
                 </div>
@@ -569,7 +569,7 @@ const App: React.FC = () => {
 
               <div 
                 ref={scrollContainerRef}
-                className="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/50 bg-white/50 backdrop-blur-sm"
+                className="overflow-x-auto custom-scrollbar rounded-2xl border-4 border-black bg-white"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                  <TimelineChart 
@@ -598,20 +598,20 @@ const App: React.FC = () => {
           </div>
           
           <div className="mt-8 flex flex-col items-center gap-2 pb-24">
-             <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md rounded-full border border-slate-200 shadow-sm text-[11px] text-slate-500 font-medium">
-                 <Maximize2 className="w-3.5 h-3.5 text-blue-500" />
+             <div className="flex items-center gap-3 px-5 py-2.5 bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xs text-black font-bold transform -rotate-1 hover:rotate-0 transition-transform cursor-default">
+                 <Maximize2 className="w-4 h-4 text-blue-500" />
                  <span>คลิ๊กในช่องเพื่อแก้ไข / เลื่อนแนวนอนเพื่อดู</span>
-                 <span className="w-[1px] h-3 bg-slate-300 mx-1"></span>
-                 <span className="font-bold text-slate-600">Created with BigBundit</span>
+                 <span className="w-[2px] h-4 bg-black mx-1"></span>
+                 <span className="text-slate-600">Created with BigBundit</span>
              </div>
           </div>
         </div>
       </main>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
+      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
         {/* JSON Controls */}
-        <div className="flex bg-white rounded-full shadow-xl border border-slate-200 p-1.5 gap-1">
+        <div className="flex bg-white rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black p-2 gap-2">
           <input 
               type="file" 
               ref={fileInputRef} 
@@ -621,15 +621,15 @@ const App: React.FC = () => {
           />
           <button 
             onClick={handleExportConfig}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-full transition-all text-xs font-bold"
+            className="flex items-center gap-2 px-4 py-2 text-black hover:bg-slate-100 rounded-full transition-all text-xs font-bold border border-transparent hover:border-slate-200"
           >
             <FileJson className="w-4 h-4" /> 
             <span>บันทึก Config</span>
           </button>
-          <div className="w-[1px] bg-slate-200 my-1"></div>
+          <div className="w-[2px] bg-black my-1"></div>
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-full transition-all text-xs font-bold"
+            className="flex items-center gap-2 px-4 py-2 text-black hover:bg-slate-100 rounded-full transition-all text-xs font-bold border border-transparent hover:border-slate-200"
           >
             <Upload className="w-4 h-4" /> 
             <span>โหลด Config</span>
@@ -639,10 +639,10 @@ const App: React.FC = () => {
         {/* Main Export Action */}
         <button 
           onClick={exportAsPng}
-          className="group flex items-center gap-3 bg-green-600 text-white px-6 py-3.5 rounded-full shadow-2xl shadow-green-600/30 hover:bg-green-700 hover:scale-[1.02] active:scale-95 transition-all"
+          className="group flex items-center gap-3 bg-green-500 text-white px-8 py-4 rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black hover:bg-green-400 hover:scale-[1.02] active:scale-95 active:shadow-none active:translate-x-[6px] active:translate-y-[6px] transition-all"
         >
-          <Download className="w-5 h-5 group-hover:animate-bounce" /> 
-          <span className="font-bold text-sm">ส่งออกเป็นรูปภาพ (PNG)</span>
+          <Download className="w-6 h-6 group-hover:animate-bounce" /> 
+          <span className="font-black text-base drop-shadow-md" style={{ textShadow: '1px 1px 0 #000' }}>ส่งออกเป็นรูปภาพ (PNG)</span>
         </button>
       </div>
     </div>

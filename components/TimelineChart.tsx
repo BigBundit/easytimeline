@@ -153,6 +153,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
   const textClass = theme.text;
   const gridClass = theme.grid;
   const bgClass = theme.bg;
+  const headerGroupTextClass = theme.headerGroupText || theme.text;
   const headerGroupBg = theme.headerGroupBg;
   const headerRowBg = theme.headerRowBg;
   const hoverClass = theme.hover;
@@ -177,11 +178,11 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
             className={`p-1 border-b border-r ${gridClass} text-center ${headerGroupBg} relative overflow-hidden group`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-            <input
+              <input
               type="text"
               value={group.label}
               onChange={(e) => onUpdateHeaderGroupLabel(group.id, e.target.value)}
-              className={`bg-transparent text-center w-full py-2 focus:outline-none ${inputBgClass} rounded-md cursor-pointer ${textClass} font-bold text-[10px] md:text-xs uppercase tracking-wide opacity-80 hover:opacity-100 transition-opacity hover:bg-slate-100/50`}
+              className={`bg-white text-center w-full py-2 focus:outline-none ${inputBgClass} rounded-lg cursor-pointer ${headerGroupTextClass} font-black text-[10px] md:text-xs uppercase tracking-wide border border-slate-200 shadow-sm focus:shadow-none focus:translate-x-[1px] focus:translate-y-[1px] transition-all`}
               placeholder="GROUP NAME"
             />
           </th>
@@ -219,12 +220,12 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
               className={`sticky left-0 z-30 p-2 text-left border-b border-r ${gridClass} ${bgClass} backdrop-blur-md shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] relative`}
               style={{ width: taskListWidth, minWidth: taskListWidth, maxWidth: taskListWidth }}
             >
-               <div className="px-2 py-1 rounded-md hover:bg-slate-100/50 transition-colors">
+               <div className="px-2 py-1 rounded-lg hover:bg-slate-100/50 transition-colors">
                  <input
                   type="text"
                   value={taskListLabel}
                   onChange={(e) => onUpdateTaskListLabel(e.target.value)}
-                  className={`bg-transparent w-full focus:outline-none cursor-pointer font-extrabold text-xs md:text-sm uppercase tracking-wider ${textClass}`}
+                  className={`bg-transparent w-full focus:outline-none cursor-pointer font-black text-xs md:text-sm uppercase tracking-wider ${textClass}`}
                 />
                </div>
                {/* Resizer Handle */}
@@ -251,7 +252,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                     type="text"
                     value={displayLabel}
                     onChange={(e) => onUpdateTimeLabel && onUpdateTimeLabel(i, e.target.value)}
-                    className={`bg-transparent text-center w-full py-2 focus:outline-none ${inputBgClass} rounded hover:bg-slate-100/50 transition-all cursor-pointer font-semibold text-[10px] md:text-[11px] text-slate-500`}
+                    className={`bg-transparent text-center w-full py-2 focus:outline-none ${inputBgClass} rounded hover:bg-black/5 transition-all cursor-pointer font-bold text-[10px] md:text-[11px] ${textClass}`}
                   />
                   {/* Subtle hover guide line */}
                   <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
@@ -269,7 +270,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-md shadow-sm flex-shrink-0 ring-1 ring-black/5" 
+                    className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-sm flex-shrink-0 border border-slate-200" 
                     style={{ backgroundColor: task.color }} 
                   />
                   <input
@@ -292,7 +293,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                         onRemoveTask(task.id);
                       }
                     }}
-                    className={`flex-1 bg-transparent border-none p-1 -ml-1 rounded focus:ring-0 ${inputBgClass} hover:bg-slate-100/50 transition-colors text-xs md:text-sm font-medium ${textClass} placeholder:text-slate-400 focus:outline-none`}
+                    className={`flex-1 bg-transparent border-none p-1 -ml-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-xs md:text-sm font-bold ${textClass} placeholder:text-slate-400 focus:outline-none`}
                     placeholder="Type task name..."
                   />
                 </div>
@@ -323,17 +324,17 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                     {/* Active Bar */}
                     {isActive && (
                       <div 
-                        className={`absolute inset-y-2 md:inset-y-3 left-0 right-0 z-10 transition-all duration-300 ease-out flex items-center justify-center overflow-hidden pointer-events-none`}
+                        className={`absolute inset-y-2 md:inset-y-3 left-0 right-0 z-10 transition-all duration-300 ease-out flex items-center justify-center overflow-hidden pointer-events-none border border-slate-200`}
                         style={{ 
                           backgroundColor: task.color,
-                          marginLeft: isFirst ? '4px' : '-1px', // -1px overlap to prevent gaps
-                          marginRight: isLast ? '4px' : '-1px',
-                          borderRadius: `${isFirst ? '6px' : '0'} ${isLast ? '6px' : '0'} ${isLast ? '6px' : '0'} ${isFirst ? '6px' : '0'}`,
-                          boxShadow: '0 2px 5px -1px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.3)'
+                          marginLeft: isFirst ? '4px' : '-2px', // Overlap borders
+                          marginRight: isLast ? '4px' : '-2px',
+                          borderRadius: `${isFirst ? '8px' : '0'} ${isLast ? '8px' : '0'} ${isLast ? '8px' : '0'} ${isFirst ? '8px' : '0'}`,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}
                       >
-                         {/* Glossy Effect */}
-                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                         {/* Cartoon Highlight Line */}
+                         <div className="absolute top-1 left-2 right-2 h-[2px] bg-white/30 rounded-full pointer-events-none" />
                       </div>
                     )}
                     
@@ -346,10 +347,10 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
           ))}
           {tasks.length === 0 && (
             <tr>
-              <td colSpan={columnCount + 1} className={`py-20 text-center italic text-sm opacity-50 ${textClass}`}>
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <span className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
-                     <span className="text-2xl text-slate-300">+</span>
+              <td colSpan={columnCount + 1} className={`py-20 text-center text-sm opacity-60 ${textClass} font-bold`}>
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <span className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-2 transform -rotate-6 hover:rotate-6 transition-transform">
+                     <span className="text-4xl text-slate-300 font-black">+</span>
                   </span>
                   เริ่มสร้างไทม์ไลน์ของคุณโดยการเพิ่มรายการงาน
                 </div>
