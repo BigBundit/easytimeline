@@ -206,11 +206,11 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
 
   return (
     <div className={`relative inline-block ${bgClass} min-w-full font-sans`}>
-      <table className={`border-collapse min-w-full`}>
+      <table className={`border-collapse min-w-full border-spacing-0`}>
         <thead>
           <tr>
             <th 
-              className={`sticky left-0 z-30 border-b border-r ${gridClass} ${headerGroupBg} backdrop-blur-md`}
+              className={`sticky left-0 z-30 border-b border-r ${gridClass} ${headerGroupBg}`}
               style={{ width: taskListWidth, minWidth: taskListWidth, maxWidth: taskListWidth }}
             />
             {getParentHeaderRow()}

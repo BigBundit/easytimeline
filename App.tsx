@@ -29,6 +29,7 @@ const App: React.FC = () => {
   
   const chartRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addTask = () => {
@@ -217,10 +218,12 @@ const App: React.FC = () => {
     if (chartRef.current && scrollContainerRef.current) {
       const chartElement = chartRef.current;
       const scrollContainer = scrollContainerRef.current;
+      const scrollWrapper = scrollWrapperRef.current;
       
       try {
         const originalScrollOverflow = scrollContainer.style.overflowX;
         const originalScrollWidth = scrollContainer.style.width;
+        const originalWrapperOverflow = scrollWrapper ? scrollWrapper.style.overflow : '';
         
         const originalChartWidth = chartElement.style.width;
         const originalChartMinWidth = chartElement.style.minWidth;
@@ -229,6 +232,11 @@ const App: React.FC = () => {
 
         scrollContainer.style.overflowX = 'visible';
         scrollContainer.style.width = 'fit-content';
+        
+        if (scrollWrapper) {
+          scrollWrapper.style.overflow = 'visible';
+          scrollWrapper.style.width = 'fit-content';
+        }
         
         chartElement.style.width = 'fit-content';
         chartElement.style.minWidth = 'auto'; // Reset min-width
@@ -251,6 +259,11 @@ const App: React.FC = () => {
 
         scrollContainer.style.overflowX = originalScrollOverflow;
         scrollContainer.style.width = originalScrollWidth;
+        
+        if (scrollWrapper) {
+          scrollWrapper.style.overflow = originalWrapperOverflow;
+          scrollWrapper.style.width = '';
+        }
         
         chartElement.style.width = originalChartWidth;
         chartElement.style.minWidth = originalChartMinWidth;
@@ -568,31 +581,39 @@ const App: React.FC = () => {
               </header>
 
               <div 
-                ref={scrollContainerRef}
-                className="overflow-x-auto custom-scrollbar rounded-2xl border-4 border-black bg-white"
-                style={{ WebkitOverflowScrolling: 'touch' }}
+                ref={scrollWrapperRef}
+                className="relative rounded-2xl overflow-hidden bg-white"
               >
-                 <TimelineChart 
-                  tasks={tasks} 
-                  headerGroups={headerGroups}
-                  scale={scale} 
-                  theme={currentTheme} 
-                  columnCount={columnCount}
-                  minColumnWidth={minColumnWidth}
-                  taskListWidth={taskListWidth}
-                  showVerticalLines={showVerticalLines}
-                  customTimeLabels={customTimeLabels}
-                  taskListLabel={taskListLabel}
-                  onUpdateTimeLabel={updateTimeLabel}
-                  onToggleSlot={toggleSlot}
-                  onAddTask={addTask}
-                  onRemoveTask={removeTask}
-                  onUpdateTask={updateTask}
-                  onUpdateTaskListLabel={setTaskListLabel}
-                  onUpdateHeaderGroupLabel={(id, label) => updateHeaderGroup(id, { label })}
-                  onPasteTasks={handlePasteTasks}
-                  onTaskListWidthChange={setTaskListWidth}
-                />
+                {/* Border Overlay to fix sticky z-index clipping */}
+                <div className="absolute inset-0 border-4 border-black rounded-2xl pointer-events-none z-40" />
+                
+                <div 
+                  ref={scrollContainerRef}
+                  className="overflow-x-auto custom-scrollbar"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                   <TimelineChart 
+                    tasks={tasks} 
+                    headerGroups={headerGroups}
+                    scale={scale} 
+                    theme={currentTheme} 
+                    columnCount={columnCount}
+                    minColumnWidth={minColumnWidth}
+                    taskListWidth={taskListWidth}
+                    showVerticalLines={showVerticalLines}
+                    customTimeLabels={customTimeLabels}
+                    taskListLabel={taskListLabel}
+                    onUpdateTimeLabel={updateTimeLabel}
+                    onToggleSlot={toggleSlot}
+                    onAddTask={addTask}
+                    onRemoveTask={removeTask}
+                    onUpdateTask={updateTask}
+                    onUpdateTaskListLabel={setTaskListLabel}
+                    onUpdateHeaderGroupLabel={(id, label) => updateHeaderGroup(id, { label })}
+                    onPasteTasks={handlePasteTasks}
+                    onTaskListWidthChange={setTaskListWidth}
+                  />
+                </div>
               </div>
             </div>
           </div>
