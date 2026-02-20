@@ -307,7 +307,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                 return (
                   <td 
                     key={i} 
-                    className={`relative border-b ${showVerticalLines && isGroupEnd ? `border-r ${gridClass}` : ''} cursor-pointer group/cell p-0 h-10 md:h-14 transition-colors duration-75 select-none`}
+                    className={`relative border-b ${showVerticalLines && isGroupEnd ? `border-r` : ''} ${gridClass} cursor-pointer group/cell p-0 h-10 md:h-14 transition-colors duration-75 select-none`}
                     onMouseDown={(e) => {
                       // Only left click
                       if (e.button === 0) {

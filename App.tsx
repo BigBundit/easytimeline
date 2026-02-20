@@ -27,10 +27,27 @@ const App: React.FC = () => {
   const [taskListLabel, setTaskListLabel] = useState<string>('รายการงาน');
   const [activeSection, setActiveSection] = useState<string>('general'); // For accordion if needed, currently distinct blocks
   
+  // Initialize date with local time to avoid timezone issues
+  const [projectDate, setProjectDate] = useState<string>(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
+
   const chartRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const [y, m, d] = dateString.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'});
+  };
 
   const addTask = () => {
     const newTask: Task = {
@@ -599,9 +616,31 @@ const App: React.FC = () => {
                     />
                   </div>
                   <div className="flex flex-col items-end gap-2 opacity-80 flex-shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-yellow-200 px-3 py-1 rounded-full border-2 border-black">
-                      <Calendar className="w-3.5 h-3.5" /> {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})}
-                    </span>
+                    <div className="relative inline-flex items-center justify-center cursor-pointer group">
+                      <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-yellow-200 px-3 py-1 rounded-full border-2 border-black group-hover:bg-yellow-300 transition-colors pointer-events-none select-none">
+                        <Calendar className="w-3.5 h-3.5" /> {formatDate(projectDate)}
+                      </span>
+                      <style>{`
+                        .date-input-full-trigger::-webkit-calendar-picker-indicator {
+                          position: absolute;
+                          top: 0;
+                          left: 0;
+                          right: 0;
+                          bottom: 0;
+                          width: auto;
+                          height: auto;
+                          color: transparent;
+                          background: transparent;
+                          cursor: pointer;
+                        }
+                      `}</style>
+                      <input 
+                        type="date" 
+                        value={projectDate}
+                        onChange={(e) => setProjectDate(e.target.value)}
+                        className="date-input-full-trigger absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20"
+                      />
+                    </div>
                     <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-black bg-blue-200 px-3 py-1 rounded-full border-2 border-black">
                       <Clock className="w-3.5 h-3.5" /> {scale === TimelineScale.DAILY ? 'Daily Scale' : scale === TimelineScale.WEEKLY ? 'Weekly Scale' : 'Monthly Scale'}
                     </span>
@@ -654,6 +693,7 @@ const App: React.FC = () => {
                  <span className="w-[2px] h-4 bg-black mx-1"></span>
                  <span className="text-slate-600">Created with BigBundit</span>
              </div>
+             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260219.2359.1</span>
           </div>
         </div>
       </main>
