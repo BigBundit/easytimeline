@@ -4,6 +4,8 @@ import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2
 import * as htmlToImage from 'html-to-image';
 import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
 import TimelineChart from './components/TimelineChart';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([
@@ -472,33 +474,63 @@ const App: React.FC = () => {
         }
 
         const fileName = `timeline-${Date.now()}.png`;
-        const file = new File([blob], fileName, { type: 'image/png' });
         
-        // Try Web Share API first (works best on Android/iOS)
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (Capacitor.isNativePlatform()) {
+          // Request permissions if needed
+          const permStatus = await Filesystem.requestPermissions();
+          if (permStatus.publicStorage !== 'granted') {
+            alert('Permission denied to save files');
+            return;
+          }
+          
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          await new Promise(resolve => reader.onloadend);
+          const base64Data = (reader.result as string).split(',')[1];
+          
+          // Save to external storage
           try {
-            await navigator.share({
-              files: [file],
-              title: 'Timeline Export',
-              text: 'My timeline chart',
+            const result = await Filesystem.writeFile({
+              path: `Download/${fileName}`,
+              data: base64Data,
+              directory: Directory.ExternalStorage,
             });
-          } catch (shareError) {
-            if ((shareError as Error).name !== 'AbortError') {
-              // Fallback: Show image in modal for long-press save
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                setExportedImage(reader.result as string);
-              };
-              reader.readAsDataURL(blob);
-            }
+            alert(`Image saved to Downloads: ${result.uri}`);
+          } catch (error) {
+            console.error('Failed to save file:', error);
+            alert('Failed to save image');
           }
         } else {
-          // Fallback: Show image in modal for long-press save (Desktop/No-Share Mobile)
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setExportedImage(reader.result as string);
-          };
-          reader.readAsDataURL(blob);
+          // Web fallback
+          const file = new File([blob], fileName, { type: 'image/png' });
+          
+          // Try Web Share API first (works best on Android/iOS)
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'Timeline Export',
+                text: 'My timeline chart',
+              });
+            } catch (shareError) {
+              if ((shareError as Error).name !== 'AbortError') {
+                // Fallback: Show image in modal for long-press save
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setExportedImage(reader.result as string);
+                };
+                reader.readAsDataURL(blob);
+              }
+            }
+          } else {
+            // Fallback: Show image in modal for long-press save (Desktop/No-Share Mobile)
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setExportedImage(reader.result as string);
+            };
+            reader.readAsDataURL(blob);
+          }
         }
 
       } catch (err) {
