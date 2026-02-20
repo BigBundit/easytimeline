@@ -251,7 +251,7 @@ const App: React.FC = () => {
           forest: '#ecfdf5', // bg-emerald-50
         };
 
-        const dataUrl = await htmlToImage.toPng(chartElement, { 
+        const blob = await htmlToImage.toBlob(chartElement, { 
           quality: 1, 
           backgroundColor: themeBgColors[themeKey] || '#ffffff',
           pixelRatio: 2,
@@ -270,10 +270,39 @@ const App: React.FC = () => {
         chartElement.style.maxWidth = originalChartMaxWidth;
         chartElement.style.boxShadow = originalChartBoxShadow;
 
+        if (!blob) {
+           throw new Error('Could not generate image blob');
+        }
+
+        // Try Web Share API first (works best on Android/iOS)
+        const file = new File([blob], `timeline-${Date.now()}.png`, { type: 'image/png' });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'EzTimeline Export',
+              text: 'My Timeline created with EzTimeline',
+            });
+            return;
+          } catch (shareError) {
+            console.warn('Sharing failed or cancelled', shareError);
+            // If share fails (e.g. user cancelled), we might still want to try download or just stop.
+            // Usually if user cancelled, we stop. If it failed technically, we try download.
+            // Let's fall back to download just in case.
+          }
+        }
+
+        // Fallback to standard download
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `timeline-${Date.now()}.png`;
-        link.href = dataUrl;
+        link.href = url;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
       } catch (err) {
         console.error('Export failed', err);
         alert('เกิดข้อผิดพลาดในการส่งออกรูปภาพ กรุณาลองใหม่อีกครั้ง');

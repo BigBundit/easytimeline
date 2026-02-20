@@ -1,0 +1,20 @@
+{
+  "name": "EzTimeline",
+  "short_name": "EzTimeline",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#fcd34d",
+  "theme_color": "#60a5fa",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2666/2666505.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2666/2666505.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
