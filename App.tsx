@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('general'); // For accordion if needed, currently distinct blocks
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [exportedImage, setExportedImage] = useState<string | null>(null);
   
   // Initialize date with local time to avoid timezone issues
   const [projectDate, setProjectDate] = useState<string>(() => {
@@ -192,7 +193,7 @@ const App: React.FC = () => {
     });
   };
 
-  const handleExportConfig = () => {
+  const handleExportConfig = async () => {
     const config = {
       version: 1,
       timestamp: Date.now(),
@@ -209,13 +210,39 @@ const App: React.FC = () => {
       customTimeLabels,
       taskListLabel
     };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+    
+    const jsonString = JSON.stringify(config, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const fileName = `timeline-config-${Date.now()}.json`;
+    const file = new File([blob], fileName, { type: 'application/json' });
+
+    // Try Web Share API first (works best on Android/iOS)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Timeline Config',
+          text: 'Backup configuration file',
+        });
+        return;
+      } catch (shareError) {
+        if ((shareError as Error).name !== 'AbortError') {
+           // Fallback to download
+        } else {
+           return; // User cancelled share
+        }
+      }
+    }
+
+    // Fallback: Direct Download
+    const url = URL.createObjectURL(blob);
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `timeline-config-${Date.now()}.json`);
+    downloadAnchorNode.href = url;
+    downloadAnchorNode.download = fileName;
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    document.body.removeChild(downloadAnchorNode);
+    URL.revokeObjectURL(url);
   };
 
   const handleImportConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,15 +314,54 @@ const App: React.FC = () => {
           forest: '#ecfdf5', // bg-emerald-50
         };
 
-        // Wait a bit for styles to apply (helps with rendering on some devices)
+        // 1. Fetch Google Fonts CSS manually
+        let fontCss = '';
+        try {
+          const fontUrl = 'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap';
+          const response = await fetch(fontUrl);
+          fontCss = await response.text();
+        } catch (e) {
+          console.warn('Failed to fetch font CSS:', e);
+        }
+
+        // 2. Swap Link for Style (to avoid CORS error in html-to-image)
+        // We remove the external link so html-to-image doesn't try to read its rules
+        const fontLink = document.querySelector('link[href*="fonts.googleapis.com"]');
+        let tempStyle: HTMLStyleElement | null = null;
+
+        if (fontLink && fontCss) {
+           tempStyle = document.createElement('style');
+           tempStyle.textContent = fontCss;
+           document.head.appendChild(tempStyle);
+           fontLink.remove();
+        }
+
+        // Wait a bit for styles to apply
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        const blob = await htmlToImage.toBlob(chartElement, { 
-          quality: 1, 
-          backgroundColor: themeBgColors[themeKey] || '#ffffff',
-          pixelRatio: 2,
-        });
+        let blob: Blob | null = null;
+        try {
+          blob = await htmlToImage.toBlob(chartElement, { 
+            quality: 1, 
+            backgroundColor: themeBgColors[themeKey] || '#ffffff',
+            pixelRatio: 2,
+            filter: (node) => {
+              // Double safety: filter out if it somehow still exists
+              if (node instanceof Element && node.tagName === 'LINK' && node.getAttribute('href')?.includes('fonts.googleapis')) {
+                return false;
+              }
+              return true;
+            }
+          });
+        } finally {
+          // 3. Restore Link and Remove Temp Style
+          if (fontLink && tempStyle) {
+             document.head.removeChild(tempStyle);
+             document.head.appendChild(fontLink);
+          }
+        }
 
+        // Restore styles immediately
         scrollContainer.style.overflowX = originalScrollOverflow;
         scrollContainer.style.width = originalScrollWidth;
         
@@ -326,27 +392,21 @@ const App: React.FC = () => {
             });
           } catch (shareError) {
             if ((shareError as Error).name !== 'AbortError') {
-              // Fallback to download if share fails (but not if user aborted)
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = fileName;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
+              // Fallback: Show image in modal for long-press save
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                setExportedImage(reader.result as string);
+              };
+              reader.readAsDataURL(blob);
             }
           }
         } else {
-          // Fallback for desktop or browsers without share support
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+          // Fallback: Show image in modal for long-press save (Desktop/No-Share Mobile)
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setExportedImage(reader.result as string);
+          };
+          reader.readAsDataURL(blob);
         }
 
       } catch (err) {
@@ -724,7 +784,7 @@ const App: React.FC = () => {
                  <span className="w-[2px] h-4 bg-black mx-1"></span>
                  <span className="text-slate-600">Created with BigBundit</span>
              </div>
-             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260220.0225</span>
+             <span className="text-[10px] text-slate-500/50 font-mono font-bold tracking-widest">v.20260220.0659</span>
           </div>
         </div>
       </main>
@@ -735,6 +795,36 @@ const App: React.FC = () => {
           <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-xl font-bold animate-pulse">กำลังสร้างรูปภาพ...</p>
           <p className="text-sm text-white/60 mt-2">กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)</p>
+        </div>
+      )}
+
+      {/* Exported Image Modal (Fallback for Android) */}
+      {exportedImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4" onClick={() => setExportedImage(null)}>
+          <div className="bg-white p-4 rounded-2xl max-w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b pb-2 border-slate-200">
+              <h3 className="font-bold text-lg text-black">รูปภาพพร้อมแล้ว!</h3>
+              <button onClick={() => setExportedImage(null)} className="p-1 hover:bg-slate-100 rounded-full">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto flex items-center justify-center bg-slate-100 rounded-lg border border-slate-200 p-2">
+              <img src={exportedImage} alt="Exported Timeline" className="max-w-full h-auto object-contain shadow-md" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-blue-600 mb-2">
+                <span className="md:hidden">แตะค้างที่รูปภาพเพื่อบันทึก (Save Image)</span>
+                <span className="hidden md:inline">คลิกขวาที่รูปภาพเพื่อบันทึก</span>
+              </p>
+              <a 
+                href={exportedImage} 
+                download={`timeline-${Date.now()}.png`}
+                className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors w-full justify-center md:w-auto"
+              >
+                <Download className="w-4 h-4" /> ดาวน์โหลดรูปภาพ
+              </a>
+            </div>
+          </div>
         </div>
       )}
 
