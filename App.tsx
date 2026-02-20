@@ -442,17 +442,34 @@ const App: React.FC = () => {
         const fileName = `timeline-${Date.now()}.png`;
         
         if (Capacitor.isNativePlatform()) {
-          // Use Share API for native platforms
-          const file = new File([blob], fileName, { type: 'image/png' });
+          // Request permissions if needed
+          const permStatus = await Filesystem.requestPermissions();
+          console.log('Permission status:', permStatus);
+          if (permStatus.publicStorage !== 'granted') {
+            alert('Permission denied to save files');
+            return;
+          }
+          
+          // Convert blob to base64
+          console.log('Converting blob to base64...');
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+          const base64Data = btoa(binaryString);
+          
+          console.log('Saving file...');
+          // Save to external storage
           try {
-            await Share.share({
-              files: [file],
-              title: 'Timeline Export',
-              text: 'My timeline chart',
+            const result = await Filesystem.writeFile({
+              path: `Download/${fileName}`,
+              data: base64Data,
+              directory: Directory.ExternalStorage,
             });
+            console.log('File saved:', result);
+            alert(`Image saved to Downloads`);
           } catch (error) {
-            console.error('Share failed:', error);
-            alert('Failed to share image');
+            console.error('Failed to save file:', error);
+            alert('Failed to save image: ' + error.message);
           }
         } else {
           // Web fallback

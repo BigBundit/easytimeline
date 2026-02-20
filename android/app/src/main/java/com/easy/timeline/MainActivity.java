@@ -19,6 +19,12 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemUI();
+    }
+
     private void hideSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
