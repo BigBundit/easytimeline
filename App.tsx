@@ -83,6 +83,7 @@ const App: React.FC = () => {
       'config_json': { th: 'Config JSON', en: 'Config JSON' },
       'config_fallback_desc': { th: 'หากไม่สามารถบันทึกไฟล์ได้ ให้คัดลอกข้อความด้านล่างเก็บไว้ แล้วนำมาวางในไฟล์ .json เพื่อโหลดภายหลัง', en: 'If file save fails, copy the text below and save it as a .json file for later loading.' },
       'copy_config': { th: 'คัดลอก Config', en: 'Copy Config' },
+      'download_file': { th: 'ดาวน์โหลดไฟล์', en: 'Download File' },
       'copy_success': { th: 'คัดลอกเรียบร้อย!', en: 'Copied!' },
       'loading_image': { th: 'กำลังสร้างรูปภาพ...', en: 'Generating Image...' },
       'loading_wait': { th: 'กรุณารอสักครู่ (อาจใช้เวลา 5-10 วินาที)', en: 'Please wait (may take 5-10 seconds)' },
@@ -278,43 +279,7 @@ const App: React.FC = () => {
     };
     
     const jsonString = JSON.stringify(config, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const fileName = `timeline-config-${Date.now()}.json`;
-    const file = new File([blob], fileName, { type: 'application/json' });
-
-    // Try Web Share API first (works best on Android/iOS)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Timeline Config',
-          text: 'Backup configuration file',
-        });
-        return;
-      } catch (shareError) {
-        if ((shareError as Error).name !== 'AbortError') {
-           // Fallback to modal if share fails
-           setExportedConfig(jsonString);
-        } else {
-           return; // User cancelled share
-        }
-      }
-    } else {
-      // Fallback: Direct Download or Modal
-      try {
-        const url = URL.createObjectURL(blob);
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.href = url;
-        downloadAnchorNode.download = fileName;
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        document.body.removeChild(downloadAnchorNode);
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        // If download fails, show modal
-        setExportedConfig(jsonString);
-      }
-    }
+    setExportedConfig(jsonString);
   };
 
   const applyConfig = (config: any) => {
@@ -1023,15 +988,34 @@ const App: React.FC = () => {
               className="w-full h-48 bg-slate-100 border border-slate-200 rounded-lg p-2 text-xs font-mono text-slate-600 focus:outline-none resize-none"
               onClick={(e) => (e.target as HTMLTextAreaElement).select()}
             />
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(exportedConfig);
-                alert(t('copy_success'));
-              }}
-              className="bg-black text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors w-full flex items-center justify-center gap-2"
-            >
-              <FileJson className="w-4 h-4" /> {t('copy_config')}
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(exportedConfig);
+                  alert(t('copy_success'));
+                }}
+                className="bg-black text-white px-4 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors flex-1 flex items-center justify-center gap-2"
+              >
+                <FileJson className="w-4 h-4" /> {t('copy_config')}
+              </button>
+              <button 
+                onClick={() => {
+                  const blob = new Blob([exportedConfig], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const downloadAnchorNode = document.createElement('a');
+                  downloadAnchorNode.href = url;
+                  downloadAnchorNode.download = `timeline-config-${Date.now()}.json`;
+                  document.body.appendChild(downloadAnchorNode);
+                  downloadAnchorNode.click();
+                  document.body.removeChild(downloadAnchorNode);
+                  URL.revokeObjectURL(url);
+                  setExportedConfig(null);
+                }}
+                className="bg-blue-600 text-white px-4 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors flex-1 flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" /> {t('download_file')}
+              </button>
+            </div>
           </div>
         </div>
       )}
