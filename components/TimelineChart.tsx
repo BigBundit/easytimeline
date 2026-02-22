@@ -177,13 +177,12 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
             colSpan={span}
             className={`p-1 border-b border-r ${gridClass} text-center ${headerGroupBg} relative overflow-hidden group`}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-              <input
+            <input
               type="text"
               value={group.label}
               onChange={(e) => onUpdateHeaderGroupLabel(group.id, e.target.value)}
-              className={`bg-white text-center w-full py-2 focus:outline-none ${inputBgClass} rounded-lg cursor-pointer ${headerGroupTextClass} font-black text-[10px] md:text-xs uppercase tracking-wide border border-slate-200 shadow-sm focus:shadow-none focus:translate-x-[1px] focus:translate-y-[1px] transition-all`}
-              placeholder="GROUP NAME"
+              className={`bg-transparent text-center w-full py-2 focus:outline-none ${inputBgClass} rounded-lg cursor-pointer ${headerGroupTextClass} font-black text-[10px] md:text-xs uppercase tracking-wide border border-transparent focus:border-slate-200 shadow-sm focus:shadow-none focus:translate-x-[1px] focus:translate-y-[1px] transition-all`}
+              placeholder=""
             />
           </th>
         );
