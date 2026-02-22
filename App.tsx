@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Download, Clock, Calendar, LayoutGrid, Type, Hash, Maximize2, Settings2, Menu, X, Plus, Trash2, MoveHorizontal, FileJson, Upload, Palette, ChevronDown, ChevronRight, Layers, ClipboardPaste, ExternalLink } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { TimelineScale, Task, HeaderGroup, THEMES } from './types';
@@ -7,6 +7,7 @@ import TimelineChart from './components/TimelineChart';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
+import { StatusBar } from '@capacitor/status-bar';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([
@@ -112,6 +113,13 @@ const App: React.FC = () => {
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // Hide status bar on Android for fullscreen experience
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      StatusBar.hide();
+    }
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
