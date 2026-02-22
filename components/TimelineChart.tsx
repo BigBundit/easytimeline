@@ -332,8 +332,6 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}
                       >
-                         {/* Cartoon Highlight Line */}
-                         <div className="absolute top-1 left-2 right-2 h-[2px] bg-white/30 rounded-full pointer-events-none" />
                       </div>
                     )}
                     
