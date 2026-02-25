@@ -493,21 +493,27 @@ const App: React.FC = () => {
               });
             } catch (shareError) {
               if ((shareError as Error).name !== 'AbortError') {
-                // Fallback: Show image in modal for long-press save
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setExportedImage(reader.result as string);
-                };
-                reader.readAsDataURL(blob);
+                // Fallback: Download directly for desktop
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
               }
             }
           } else {
-            // Fallback: Show image in modal for long-press save (Desktop/No-Share Mobile)
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setExportedImage(reader.result as string);
-            };
-            reader.readAsDataURL(blob);
+            // Fallback: Download directly for desktop/no-share mobile
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
           }
         }
 
