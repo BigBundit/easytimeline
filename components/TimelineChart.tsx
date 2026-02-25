@@ -292,7 +292,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                         onRemoveTask(task.id);
                       }
                     }}
-                    className={`flex-1 bg-transparent border-none p-1 -ml-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-xs md:text-sm font-bold ${textClass} placeholder:text-slate-400 focus:outline-none`}
+                    className={`flex-1 max-w-[200px] bg-transparent border-none p-1 -ml-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-xs md:text-sm font-bold ${textClass} placeholder:text-slate-400 focus:outline-none`}
                     placeholder="Type task name..."
                   />
                 </div>
