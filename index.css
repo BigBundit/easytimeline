@@ -1,0 +1,14 @@
+/* Global styles including safe area support for mobile notch */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+}
+
+/* Apply safe-area padding to the app root when present */
+.safe-area-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+/* Ensure header respects safe area on mobile */
+.header-safe-top {
+  padding-top: calc(var(--safe-area-inset-top) + 1rem); /* keep original padding plus safe area */
+}

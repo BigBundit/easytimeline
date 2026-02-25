@@ -679,9 +679,9 @@ const App: React.FC = () => {
   const currentTheme = THEMES[themeKey];
 
   return (
-    <div className="min-h-screen bg-amber-300 flex flex-col md:flex-row relative overflow-x-hidden text-black font-['Prompt']">
+    <div className="min-h-screen bg-amber-300 flex flex-col md:flex-row relative overflow-x-hidden text-black font-['Prompt'] safe-area-top">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-blue-400 border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_0px_rgba(0,0,0,0.2)]">
+      <div className="md:hidden flex items-center justify-between p-4 bg-blue-400 border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_0px_rgba(0,0,0,0.2)] header-safe-top">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-white border-2 border-black rounded-lg text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
              <LayoutGrid className="w-5 h-5" />
