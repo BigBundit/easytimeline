@@ -493,33 +493,183 @@ const App: React.FC = () => {
               });
             } catch (shareError) {
               if ((shareError as Error).name !== 'AbortError') {
-                // Fallback: Download directly for desktop
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                // Fallback: Show image in modal for long-press save
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setExportedImage(reader.result as string);
+                };
+                reader.readAsDataURL(blob);
               }
             }
           } else {
-            // Fallback: Download directly for desktop/no-share mobile
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Fallback: Show image in modal for long-press save (Desktop/No-Share Mobile)
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setExportedImage(reader.result as string);
+            };
+            reader.readAsDataURL(blob);
           }
         }
 
       } catch (err) {
         console.error('Export failed', err);
         alert('เกิดข้อผิดพลาดในการส่งออกรูปภาพ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setIsExporting(false);
+      }
+    }
+  };
+
+  const downloadImage = async () => {
+    if (chartRef.current && scrollContainerRef.current) {
+      setIsExporting(true);
+      const chartElement = chartRef.current;
+      const scrollContainer = scrollContainerRef.current;
+      const scrollWrapper = scrollWrapperRef.current;
+      
+      try {
+        const originalScrollOverflow = scrollContainer.style.overflowX;
+        const originalScrollWidth = scrollContainer.style.width;
+        const originalWrapperOverflow = scrollWrapper ? scrollWrapper.style.overflow : '';
+        
+        const originalChartWidth = chartElement.style.width;
+        const originalChartMinWidth = chartElement.style.minWidth;
+        const originalChartMaxWidth = chartElement.style.maxWidth;
+        const originalChartBoxShadow = chartElement.style.boxShadow;
+
+        scrollContainer.style.overflowX = 'visible';
+        scrollContainer.style.width = 'fit-content';
+        
+        if (scrollWrapper) {
+          scrollWrapper.style.overflow = 'visible';
+          scrollWrapper.style.width = 'fit-content';
+        }
+        
+        chartElement.style.width = 'fit-content';
+        chartElement.style.minWidth = 'auto'; // Reset min-width
+        chartElement.style.maxWidth = 'none'; // Reset max-width
+        chartElement.style.boxShadow = 'none';
+
+        // Map theme keys to specific hex colors for export
+        const themeBgColors: Record<string, string> = {
+          modern: '#ffffff',
+          dark: '#000000',
+          minimal: '#fff1f2', // bg-rose-50
+          forest: '#ecfdf5', // bg-emerald-50
+        };
+
+        // 1. Fetch Google Fonts CSS manually
+        let fontCss = '';
+        try {
+          const fontUrl = 'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap';
+          const response = await fetch(fontUrl);
+          fontCss = await response.text();
+        } catch (e) {
+          console.warn('Failed to fetch font CSS:', e);
+        }
+
+        // 2. Swap Link for Style (to avoid CORS error in html-to-image)
+        // We remove the external link so html-to-image doesn't try to read its rules
+        const fontLink = document.querySelector('link[href*="fonts.googleapis.com"]');
+        let tempStyle: HTMLStyleElement | null = null;
+
+        if (fontLink && fontCss) {
+           tempStyle = document.createElement('style');
+           tempStyle.textContent = fontCss;
+           document.head.appendChild(tempStyle);
+           fontLink.remove();
+        }
+
+        // Wait a bit for styles to apply
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        let blob: Blob | null = null;
+        try {
+          blob = await htmlToImage.toBlob(chartElement, { 
+            quality: 1, 
+            backgroundColor: themeBgColors[themeKey] || '#ffffff',
+            pixelRatio: 2,
+            filter: (node) => {
+              // Double safety: filter out if it somehow still exists
+              if (node instanceof Element && node.tagName === 'LINK' && node.getAttribute('href')?.includes('fonts.googleapis')) {
+                return false;
+              }
+              return true;
+            }
+          });
+        } finally {
+          // 3. Restore Link and Remove Temp Style
+          if (fontLink && tempStyle) {
+             document.head.removeChild(tempStyle);
+             document.head.appendChild(fontLink);
+          }
+        }
+
+        // Restore styles immediately
+        scrollContainer.style.overflowX = originalScrollOverflow;
+        scrollContainer.style.width = originalScrollWidth;
+        
+        if (scrollWrapper) {
+          scrollWrapper.style.overflow = originalWrapperOverflow;
+          scrollWrapper.style.width = '';
+        }
+        
+        chartElement.style.width = originalChartWidth;
+        chartElement.style.minWidth = originalChartMinWidth;
+        chartElement.style.maxWidth = originalChartMaxWidth;
+        chartElement.style.boxShadow = originalChartBoxShadow;
+
+        if (!blob) {
+           throw new Error('Could not generate image blob');
+        }
+
+        const fileName = `timeline-${Date.now()}.png`;
+        
+        if (Capacitor.isNativePlatform()) {
+          // Request permissions if needed
+          const permStatus = await Filesystem.requestPermissions();
+          console.log('Permission status:', permStatus);
+          if (permStatus.publicStorage !== 'granted') {
+            alert('Permission denied to save files');
+            return;
+          }
+          
+          // Convert blob to base64
+          console.log('Converting blob to base64...');
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+          const base64Data = btoa(binaryString);
+          
+          console.log('Saving file...');
+          // Save to external storage
+          try {
+            const result = await Filesystem.writeFile({
+              path: `Download/${fileName}`,
+              data: base64Data,
+              directory: Directory.ExternalStorage,
+            });
+            console.log('File saved:', result);
+            alert(`Image saved to Downloads`);
+          } catch (error) {
+            console.error('Failed to save file:', error);
+            alert('Failed to save image: ' + error.message);
+          }
+        } else {
+          // Web: Download directly
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+      } catch (err) {
+        console.error('Download failed', err);
+        alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ กรุณาลองใหม่อีกครั้ง');
       } finally {
         setIsExporting(false);
       }
@@ -1089,6 +1239,15 @@ const App: React.FC = () => {
         >
           <Download className="w-4 h-4 md:w-6 md:h-6 group-hover:animate-bounce" /> 
           <span className="font-black text-sm md:text-base drop-shadow-md" style={{ textShadow: '1px 1px 0 #000' }}>{t('export_png')}</span>
+        </button>
+
+        {/* Download Image Action */}
+        <button 
+          onClick={downloadImage}
+          className="group flex items-center gap-2 md:gap-3 bg-blue-500 text-white px-4 md:px-8 py-2 md:py-4 rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-black hover:bg-blue-400 hover:scale-[1.02] active:scale-95 active:shadow-none active:translate-x-[6px] active:translate-y-[6px] transition-all"
+        >
+          <Download className="w-4 h-4 md:w-6 md:h-6 group-hover:animate-bounce" /> 
+          <span className="font-black text-sm md:text-base drop-shadow-md" style={{ textShadow: '1px 1px 0 #000' }}>{t('download_image')}</span>
         </button>
       </div>
     </div>
