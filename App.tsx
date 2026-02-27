@@ -144,22 +144,39 @@ const App: React.FC = () => {
     return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'});
   };
 
+  const makeTask = (label?: string): Task => ({
+    id: Date.now().toString() + '-' + Math.random().toString(36).slice(2,8),
+    label: label ?? t('task_new'),
+    slots: [],
+    color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+  });
+
   const addTask = () => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      label: t('task_new'),
-      slots: [],
-      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
-    };
-    setTasks([...tasks, newTask]);
+    setTasks(prev => [...prev, makeTask()]);
   };
 
   const removeTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
+    const removeRec = (list: Task[]): Task[] => list.reduce<Task[]>((acc, cur) => {
+      if (cur.id === id) return acc;
+      if (cur.children) {
+        const newChildren = removeRec(cur.children);
+        if (newChildren !== cur.children) acc.push({ ...cur, children: newChildren });
+        else acc.push(cur);
+      } else {
+        acc.push(cur);
+      }
+      return acc;
+    }, []);
+    setTasks(prev => removeRec(prev));
   };
 
   const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, ...updates } : t));
+    const updateRec = (list: Task[]): Task[] => list.map(t => {
+      if (t.id === id) return { ...t, ...updates };
+      if (t.children) return { ...t, children: updateRec(t.children) };
+      return t;
+    });
+    setTasks(prev => updateRec(prev));
   };
 
   const addHeaderGroup = () => {
@@ -186,26 +203,21 @@ const App: React.FC = () => {
   };
 
   const toggleSlot = (taskId: string, slotIndex: number, forceState?: boolean) => {
-    setTasks(tasks.map(task => {
+    const toggleRec = (list: Task[]): Task[] => list.map(task => {
       if (task.id === taskId) {
         const isCurrentlySelected = task.slots.includes(slotIndex);
         let shouldSelect = !isCurrentlySelected;
-
-        // If forceState is provided, use it instead of toggling
-        if (typeof forceState === 'boolean') {
-          shouldSelect = forceState;
-        }
-
-        // Optimize: if state doesn't change, return original task
+        if (typeof forceState === 'boolean') shouldSelect = forceState;
         if (shouldSelect === isCurrentlySelected) return task;
-
         const newSlots = shouldSelect
           ? [...task.slots, slotIndex].sort((a, b) => a - b)
           : task.slots.filter(s => s !== slotIndex);
         return { ...task, slots: newSlots };
       }
+      if (task.children) return { ...task, children: toggleRec(task.children) };
       return task;
-    }));
+    });
+    setTasks(prev => toggleRec(prev));
   };
 
   const getNextLabel = (current: string): string => {
@@ -248,25 +260,39 @@ const App: React.FC = () => {
   };
 
   const handlePasteTasks = (taskId: string, lines: string[]) => {
-    setTasks(prev => {
-      const idx = prev.findIndex(t => t.id === taskId);
-      if (idx === -1) return prev;
-      
-      const newTasks = [...prev];
-      // Update the current task with the first line
-      newTasks[idx] = { ...newTasks[idx], label: lines[0] };
-      
-      // Create and insert subsequent tasks
-      const newItems = lines.slice(1).map((line, i) => ({
-        id: `${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
-        label: line,
-        slots: [], 
-        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')
-      }));
-      
-      newTasks.splice(idx + 1, 0, ...newItems);
-      return newTasks;
+    const insertAfterRec = (list: Task[]): Task[] => {
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i];
+        if (t.id === taskId) {
+          const newItems = lines.slice(1).map((line, ii) => ({ ...makeTask(line) }));
+          const newList = [...list];
+          newList[i] = { ...newList[i], label: lines[0] };
+          newList.splice(i + 1, 0, ...newItems);
+          return newList;
+        }
+        if (t.children) {
+          const updatedChildren = insertAfterRec(t.children);
+          if (updatedChildren !== t.children) {
+            return list.map(x => x.id === t.id ? { ...t, children: updatedChildren } : x);
+          }
+        }
+      }
+      return list;
+    };
+    setTasks(prev => insertAfterRec(prev));
+  };
+
+  const addSubTask = (parentId: string) => {
+    const addRec = (list: Task[]): Task[] => list.map(t => {
+      if (t.id === parentId) {
+        const child = makeTask();
+        const children = t.children ? [...t.children, child] : [child];
+        return { ...t, children };
+      }
+      if (t.children) return { ...t, children: addRec(t.children) };
+      return t;
     });
+    setTasks(prev => addRec(prev));
   };
 
   const handleExportConfig = async () => {
@@ -1029,6 +1055,7 @@ const App: React.FC = () => {
                     onUpdateHeaderGroupLabel={(id, label) => updateHeaderGroup(id, { label })}
                     onPasteTasks={handlePasteTasks}
                     onTaskListWidthChange={setTaskListWidth}
+                    onAddSubTask={addSubTask}
                   />
                 </div>
               </div>

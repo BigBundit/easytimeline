@@ -10,6 +10,7 @@ export interface Task {
   label: string;
   slots: number[]; // Array of indices representing active time slots
   color: string;
+  children?: Task[]; // Optional nested sub-tasks
 }
 
 export interface HeaderGroup {

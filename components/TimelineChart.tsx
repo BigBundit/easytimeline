@@ -16,6 +16,7 @@ interface TimelineChartProps {
   onUpdateTimeLabel?: (index: number, value: string) => void;
   onToggleSlot: (taskId: string, slotIndex: number, forceState?: boolean) => void;
   onAddTask: () => void;
+  onAddSubTask?: (parentId: string) => void;
   onRemoveTask: (id: string) => void;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onUpdateTaskListLabel: (value: string) => void;
@@ -43,7 +44,8 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
   onUpdateTaskListLabel,
   onUpdateHeaderGroupLabel,
   onPasteTasks,
-  onTaskListWidthChange
+  onTaskListWidthChange,
+  onAddSubTask
 }) => {
 
   const resizingRef = useRef(false);
@@ -262,39 +264,58 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
         </thead>
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id} className={`group ${hoverClass} transition-colors duration-150`}>
+            <React.Fragment key={task.id}>
+              <tr className={`group ${hoverClass} transition-colors duration-150`}>
               <td 
                 className={`sticky left-0 z-20 p-2 md:py-3 md:px-4 border-r ${gridClass} ${bgClass} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]`}
                 style={{ width: taskListWidth, minWidth: taskListWidth, maxWidth: taskListWidth }}
               >
-                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                   <div 
                     className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-sm flex-shrink-0 border border-slate-200" 
                     style={{ backgroundColor: task.color }} 
                   />
-                  <input
-                    type="text"
-                    value={task.label}
-                    onChange={(e) => onUpdateTask(task.id, { label: e.target.value })}
-                    onPaste={(e) => {
-                      const text = e.clipboardData.getData('text');
-                      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-                      if (lines.length > 1) {
-                         e.preventDefault();
-                         onPasteTasks(task.id, lines);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        onAddTask();
-                      } else if (e.key === 'Backspace' && task.label === '') {
-                        onRemoveTask(task.id);
-                      }
-                    }}
-                    className={`flex-1 min-w-0 truncate overflow-hidden bg-transparent border-none p-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-xs md:text-sm font-bold ${textClass} placeholder:text-slate-400 focus:outline-none`}
-                    placeholder="Type task name..."
-                  />
+                  <div className="flex-1 min-w-0">
+                    <textarea
+                      value={task.label}
+                      rows={1}
+                      onChange={(e) => onUpdateTask(task.id, { label: e.target.value })}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }}
+                      onPaste={(e) => {
+                        const text = e.clipboardData.getData('text');
+                        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                        if (lines.length > 1) {
+                          e.preventDefault();
+                          onPasteTasks(task.id, lines);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          onAddTask();
+                        } else if (e.key === 'Backspace' && task.label === '') {
+                          onRemoveTask(task.id);
+                        }
+                      }}
+                      className={`w-full resize-none bg-transparent border-none p-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-xs md:text-sm font-bold ${textClass} placeholder:text-slate-400 focus:outline-none`}
+                      placeholder="Type task name..."
+                    />
+                  </div>
+                  <div className="flex-shrink-0">
+                    {onAddSubTask && (
+                      <button
+                        title="Add sub-item"
+                        onClick={() => onAddSubTask(task.id)}
+                        className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded bg-white border border-slate-200 hover:bg-slate-50"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
                 </div>
               </td>
               {Array.from({ length: columnCount }).map((_, i) => {
@@ -341,6 +362,83 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
                 );
               })}
             </tr>
+            {/* Render children (sub-items) below parent task */}
+            {task.children && task.children.length > 0 && task.children.map((child) => (
+                <tr key={child.id} className={`group ${hoverClass} transition-colors duration-150`}>
+                  <td 
+                    className={`sticky left-0 z-10 p-2 md:py-3 md:px-4 border-r ${gridClass} ${bgClass} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]`} 
+                    style={{ width: taskListWidth, minWidth: taskListWidth, maxWidth: taskListWidth }}
+                  >
+                    <div className="flex items-center gap-3 pl-6">
+                      <div 
+                        className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0 border border-slate-200" 
+                        style={{ backgroundColor: child.color }} 
+                      />
+                      <textarea
+                        value={child.label}
+                        rows={1}
+                        onChange={(e) => onUpdateTask(child.id, { label: e.target.value })}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = target.scrollHeight + 'px';
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            onAddTask();
+                          } else if (e.key === 'Backspace' && child.label === '') {
+                            onRemoveTask(child.id);
+                          }
+                        }}
+                        className={`w-full resize-none bg-transparent border-none p-1 rounded focus:ring-0 ${inputBgClass} hover:bg-black/5 transition-colors text-[10px] md:text-xs font-semibold ${textClass} placeholder:text-slate-400 focus:outline-none`}
+                        placeholder="Type sub-item..."
+                      />
+                    </div>
+                  </td>
+                  {Array.from({ length: columnCount }).map((_, i) => {
+                    const isActive = child.slots.includes(i);
+                    const isFirst = i === 0 || !child.slots.includes(i - 1);
+                    const isLast = i === columnCount - 1 || !child.slots.includes(i + 1);
+                    const isGroupEnd = groupEndIndices.has(i);
+                    
+                    return (
+                      <td 
+                        key={i} 
+                        className={`relative border-b ${showVerticalLines && isGroupEnd ? `border-r` : ''} ${gridClass} cursor-pointer group/cell p-0 h-10 md:h-14 transition-colors duration-75 select-none`}
+                        onMouseDown={(e) => {
+                          if (e.button === 0) handleSlotMouseDown(child.id, i, isActive);
+                        }}
+                        onMouseEnter={() => handleSlotMouseEnter(child.id, i)}
+                      >
+                        {/* Hover indicator dot */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none z-0">
+                           <div className={`w-1.5 h-1.5 rounded-full bg-slate-400/30`} />
+                        </div>
+
+                        {/* Active Bar */}
+                        {isActive && (
+                          <div 
+                            className={`absolute inset-y-2 md:inset-y-3 left-0 right-0 z-10 transition-all duration-300 ease-out flex items-center justify-center overflow-hidden pointer-events-none border border-slate-200`}
+                            style={{ 
+                              backgroundColor: child.color,
+                              marginLeft: isFirst ? '4px' : '-2px',
+                              marginRight: isLast ? '4px' : '-2px',
+                              borderRadius: `${isFirst ? '8px' : '0'} ${isLast ? '8px' : '0'} ${isLast ? '8px' : '0'} ${isFirst ? '8px' : '0'}`,
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                          </div>
+                        )}
+                        
+                        {/* Grid line helper on hover row */}
+                        {!isActive && <div className="absolute inset-0 border-l border-transparent group-hover/cell:border-slate-100/50 pointer-events-none" />}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </React.Fragment>
           ))}
           {tasks.length === 0 && (
             <tr>
